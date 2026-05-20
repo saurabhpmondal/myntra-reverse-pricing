@@ -50,6 +50,34 @@ let filters = {
 
 };
 
+function showGlobalLoader() {
+
+  const loader =
+    document.getElementById(
+      'globalLoader'
+    );
+
+  if (loader) {
+    loader.style.display =
+      'flex';
+  }
+
+}
+
+function hideGlobalLoader() {
+
+  const loader =
+    document.getElementById(
+      'globalLoader'
+    );
+
+  if (loader) {
+    loader.style.display =
+      'none';
+  }
+
+}
+
 function renderContent() {
 
   const content =
@@ -395,6 +423,33 @@ async function bootstrapUI() {
 
   app.innerHTML = `
 
+    <div
+      class="global-loader"
+      id="globalLoader"
+    >
+
+      <div class="global-loader-content">
+
+        <div class="loader-spinner">
+
+        </div>
+
+        <div class="loader-title">
+
+          Loading Pricing Engine
+
+        </div>
+
+        <div class="loader-subtitle">
+
+          Preparing marketplace intelligence...
+
+        </div>
+
+      </div>
+
+    </div>
+
     <div class="app-shell">
 
       ${renderHeader()}
@@ -432,9 +487,23 @@ document.addEventListener(
   'DOMContentLoaded',
   async () => {
 
-    await initializeApp();
+    try {
 
-    await bootstrapUI();
+      showGlobalLoader();
+
+      await initializeApp();
+
+      await bootstrapUI();
+
+      hideGlobalLoader();
+
+    } catch (error) {
+
+      console.error(error);
+
+      hideGlobalLoader();
+
+    }
 
   }
 );
