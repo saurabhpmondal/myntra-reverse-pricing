@@ -2,14 +2,12 @@ import {
   calculateSettlement
 } from './settlementCalculator.js';
 
-function roundToNearestFive(value) {
-
-  return (
-    Math.round(
-      Number(value) / 5
-    ) * 5
-  );
-}
+/*
+-----------------------------------
+PURE REVERSE PAYOUT SOLVER
+NO MRP DEPENDENCY
+-----------------------------------
+*/
 
 export function solveSellingPrice({
 
@@ -17,41 +15,43 @@ export function solveSellingPrice({
   articleType,
 
   targetPayout,
-
-  tp = 0,
-  mrp = 0,
-
-  minSP = 99,
-  maxSP = null,
-
-  tolerance = 1,
-
-  maxIterations = 100
+  tp
 
 }) {
 
-  const maximumSP =
-    maxSP || mrp;
+  /*
+  -----------------------------------
+  VALIDATION
+  -----------------------------------
+  */
 
-  let low = minSP;
-  let high = maximumSP;
-
-  let bestResult = null;
-
-  let iteration = 0;
-
-  while (
-    low <= high &&
-    iteration < maxIterations
+  if (
+    !brand ||
+    !articleType ||
+    !targetPayout
   ) {
 
-    iteration++;
+    return null;
 
-    let mid =
-      (low + high) / 2;
+  }
 
-    mid =
-      roundToNearestFive(mid);
+  /*
+  -----------------------------------
+  START SEARCH
+  -----------------------------------
+  */
+
+  let sellingPrice = 50;
+
+  let matchedSettlement = null;
+
+  /*
+  -----------------------------------
+  PROGRESSIVE SEARCH
+  -----------------------------------
+  */
+
+  while (sellingPrice <= 50000) {
 
     const settlement =
       calculateSettlement({
@@ -59,63 +59,73 @@ export function solveSellingPrice({
         brand,
         articleType,
 
-        sellingPrice: mid,
+        sellingPrice,
 
-        tp,
-        mrp
+        tp
 
       });
 
-    const payout =
-      settlement.payoutAfterCODB;
+    /*
+    -----------------------------------
+    INVALID SETTLEMENT
+    -----------------------------------
+    */
 
-    const difference =
-      payout - targetPayout;
+    if (!settlement) {
 
-    if (
-      !bestResult ||
-      Math.abs(difference) <
-      Math.abs(
-        bestResult.difference
-      )
-    ) {
+      sellingPrice++;
 
-      bestResult = {
-        sellingPrice: mid,
-
-        payout,
-
-        difference,
-
-        settlement,
-
-        iterations: iteration
-      };
+      continue;
 
     }
 
+    /*
+    -----------------------------------
+    TARGET MATCHED
+    -----------------------------------
+    */
+
     if (
-      Math.abs(difference)
-      <= tolerance
+      settlement.payoutAfterCODB >=
+      targetPayout
     ) {
+
+      matchedSettlement =
+        settlement;
 
       break;
 
     }
 
-    if (
-      payout > targetPayout
-    ) {
-
-      high = mid - 5;
-
-    } else {
-
-      low = mid + 5;
-
-    }
+    sellingPrice++;
 
   }
 
-  return bestResult;
+  /*
+  -----------------------------------
+  NO MATCH
+  -----------------------------------
+  */
+
+  if (!matchedSettlement) {
+
+    return null;
+
+  }
+
+  /*
+  -----------------------------------
+  FINAL RESULT
+  -----------------------------------
+  */
+
+  return {
+
+    sellingPrice,
+
+    settlement:
+      matchedSettlement
+
+  };
+
 }
