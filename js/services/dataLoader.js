@@ -47,7 +47,8 @@ function normalizeGtaRow(row) {
 async function fetchProductMaster() {
   const { data, error } = await supabase
     .from('product_master')
-    .select('*');
+    .select('*')
+    .range(0, 20000);
 
   if (error) {
     throw new Error(`PRODUCT MASTER FETCH FAILED: ${error.message}`);
@@ -59,7 +60,8 @@ async function fetchProductMaster() {
 async function fetchCommercialsMaster() {
   const { data, error } = await supabase
     .from('commercials_master')
-    .select('*');
+    .select('*')
+    .range(0, 5000);
 
   if (error) {
     throw new Error(`COMMERCIALS MASTER FETCH FAILED: ${error.message}`);
@@ -71,7 +73,8 @@ async function fetchCommercialsMaster() {
 async function fetchGtaMaster() {
   const { data, error } = await supabase
     .from('gta_master')
-    .select('*');
+    .select('*')
+    .range(0, 5000);
 
   if (error) {
     throw new Error(`GTA MASTER FETCH FAILED: ${error.message}`);
