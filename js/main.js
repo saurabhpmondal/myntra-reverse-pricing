@@ -26,6 +26,11 @@ import {
   renderDashboard
 } from './reports/dashboardReport.js';
 
+import {
+  renderPricingCalculator,
+  initializePricingCalculator
+} from './calculators/pricingCalculator.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
@@ -49,6 +54,12 @@ function renderContent() {
     return;
   }
 
+  /*
+  -----------------------------------
+  DASHBOARD
+  -----------------------------------
+  */
+
   if (
     activeTab ===
     'dashboard'
@@ -63,6 +74,12 @@ function renderContent() {
 
   }
 
+  /*
+  -----------------------------------
+  REVERSE PRICING
+  -----------------------------------
+  */
+
   if (
     activeTab ===
     'reverse-pricing'
@@ -74,7 +91,34 @@ function renderContent() {
       );
 
     return;
+
   }
+
+  /*
+  -----------------------------------
+  PRICING CALCULATOR
+  -----------------------------------
+  */
+
+  if (
+    activeTab ===
+    'pricing-calculator'
+  ) {
+
+    content.innerHTML =
+      renderPricingCalculator();
+
+    initializePricingCalculator();
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
+  DEFAULT
+  -----------------------------------
+  */
 
   content.innerHTML = `
 
