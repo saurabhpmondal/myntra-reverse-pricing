@@ -2,6 +2,20 @@ import {
   appCache
 } from '../services/cacheService.js';
 
+function getAllStatuses() {
+
+  return [
+    ...new Set(
+      appCache.productMaster.map(
+        row => row.status
+      )
+    )
+  ]
+  .filter(Boolean)
+  .sort();
+
+}
+
 function getStatusCount(status) {
 
   return appCache.productMaster.filter(
@@ -10,7 +24,7 @@ function getStatusCount(status) {
   ).length;
 }
 
-function buildBrandSummary() {
+function buildBrandSummary(statuses) {
 
   const brandMap = {};
 
@@ -24,15 +38,15 @@ function buildBrandSummary() {
       brandMap[brand] = {
 
         brand,
-
-        total: 0,
-
-        CONTINUE: 0,
-        SPECIAL: 0,
-        EOSS: 0,
-        LIQUIDATION: 0
+        total: 0
 
       };
+
+      statuses.forEach(status => {
+
+        brandMap[brand][status] = 0;
+
+      });
 
     }
 
@@ -64,28 +78,13 @@ function buildBrandSummary() {
 
 export function renderDashboard() {
 
-  const continueCount =
-    getStatusCount(
-      'CONTINUE'
-    );
-
-  const specialCount =
-    getStatusCount(
-      'SPECIAL'
-    );
-
-  const eossCount =
-    getStatusCount(
-      'EOSS'
-    );
-
-  const liquidationCount =
-    getStatusCount(
-      'LIQUIDATION'
-    );
+  const statuses =
+    getAllStatuses();
 
   const brandSummary =
-    buildBrandSummary();
+    buildBrandSummary(
+      statuses
+    );
 
   return `
 
@@ -157,53 +156,22 @@ export function renderDashboard() {
 
       <div class="status-grid">
 
-        <div class="status-card">
+        ${statuses.map(status => `
 
-          <div class="status-label">
-            CONTINUE
+          <div class="status-card">
+
+            <div class="status-label">
+              ${status}
+            </div>
+
+            <div class="status-value">
+              ${getStatusCount(status)
+                .toLocaleString()}
+            </div>
+
           </div>
 
-          <div class="status-value">
-            ${continueCount.toLocaleString()}
-          </div>
-
-        </div>
-
-        <div class="status-card">
-
-          <div class="status-label">
-            SPECIAL
-          </div>
-
-          <div class="status-value">
-            ${specialCount.toLocaleString()}
-          </div>
-
-        </div>
-
-        <div class="status-card">
-
-          <div class="status-label">
-            EOSS
-          </div>
-
-          <div class="status-value">
-            ${eossCount.toLocaleString()}
-          </div>
-
-        </div>
-
-        <div class="status-card">
-
-          <div class="status-label">
-            LIQUIDATION
-          </div>
-
-          <div class="status-value">
-            ${liquidationCount.toLocaleString()}
-          </div>
-
-        </div>
+        `).join('')}
 
       </div>
 
@@ -227,13 +195,11 @@ export function renderDashboard() {
 
               <th>TOTAL</th>
 
-              <th>CONTINUE</th>
+              ${statuses.map(status => `
 
-              <th>SPECIAL</th>
+                <th>${status}</th>
 
-              <th>EOSS</th>
-
-              <th>LIQUIDATION</th>
+              `).join('')}
 
             </tr>
 
@@ -249,13 +215,13 @@ export function renderDashboard() {
 
                 <td>${item.total}</td>
 
-                <td>${item.CONTINUE}</td>
+                ${statuses.map(status => `
 
-                <td>${item.SPECIAL}</td>
+                  <td>
+                    ${item[status] || 0}
+                  </td>
 
-                <td>${item.EOSS}</td>
-
-                <td>${item.LIQUIDATION}</td>
+                `).join('')}
 
               </tr>
 
@@ -343,5 +309,3 @@ export function renderDashboard() {
 
   `;
 }
-
-
