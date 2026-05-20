@@ -50,6 +50,10 @@ let filters = {
 
 };
 
+/* -----------------------------------
+GLOBAL LOADER
+----------------------------------- */
+
 function showGlobalLoader() {
 
   const loader =
@@ -58,8 +62,10 @@ function showGlobalLoader() {
     );
 
   if (loader) {
+
     loader.style.display =
       'flex';
+
   }
 
 }
@@ -72,11 +78,17 @@ function hideGlobalLoader() {
     );
 
   if (loader) {
+
     loader.style.display =
       'none';
+
   }
 
 }
+
+/* -----------------------------------
+RENDER CONTENT
+----------------------------------- */
 
 function renderContent() {
 
@@ -214,6 +226,10 @@ function renderContent() {
   `;
 }
 
+/* -----------------------------------
+TAB UI
+----------------------------------- */
+
 function setActiveTabUI() {
 
   document
@@ -249,6 +265,10 @@ function switchTab(tabId) {
 
 }
 
+/* -----------------------------------
+QUICK ACTIONS
+----------------------------------- */
+
 function initializeQuickActions() {
 
   const cards =
@@ -273,6 +293,10 @@ function initializeQuickActions() {
 
 }
 
+/* -----------------------------------
+TABS
+----------------------------------- */
+
 function initializeTabs() {
 
   const tabButtons =
@@ -296,6 +320,10 @@ function initializeTabs() {
   });
 
 }
+
+/* -----------------------------------
+FILTERS
+----------------------------------- */
 
 function initializeFilters() {
 
@@ -414,6 +442,10 @@ function initializeFilters() {
 
 }
 
+/* -----------------------------------
+BOOTSTRAP UI
+----------------------------------- */
+
 async function bootstrapUI() {
 
   const app =
@@ -422,33 +454,6 @@ async function bootstrapUI() {
     );
 
   app.innerHTML = `
-
-    <div
-      class="global-loader"
-      id="globalLoader"
-    >
-
-      <div class="global-loader-content">
-
-        <div class="loader-spinner">
-
-        </div>
-
-        <div class="loader-title">
-
-          Loading Pricing Engine
-
-        </div>
-
-        <div class="loader-subtitle">
-
-          Preparing marketplace intelligence...
-
-        </div>
-
-      </div>
-
-    </div>
 
     <div class="app-shell">
 
@@ -483,9 +488,54 @@ async function bootstrapUI() {
 
 }
 
+/* -----------------------------------
+APP START
+----------------------------------- */
+
 document.addEventListener(
   'DOMContentLoaded',
   async () => {
+
+    /*
+    -----------------------------------
+    CREATE LOADER FIRST
+    -----------------------------------
+    */
+
+    document.body.insertAdjacentHTML(
+      'beforeend',
+
+      `
+
+      <div
+        class="global-loader"
+        id="globalLoader"
+      >
+
+        <div class="global-loader-content">
+
+          <div class="loader-spinner">
+
+          </div>
+
+          <div class="loader-title">
+
+            Loading Pricing Engine
+
+          </div>
+
+          <div class="loader-subtitle">
+
+            Preparing marketplace intelligence...
+
+          </div>
+
+        </div>
+
+      </div>
+
+      `
+    );
 
     try {
 
