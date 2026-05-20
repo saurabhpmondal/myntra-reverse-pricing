@@ -36,6 +36,11 @@ import {
   initializeBestBrand
 } from './reports/bestBrandReport.js';
 
+import {
+  renderBulkPricingReport,
+  initializeBulkPricing
+} from './reports/bulkPricingReport.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
@@ -176,6 +181,26 @@ function renderContent() {
       renderBestBrandReport();
 
     initializeBestBrand();
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
+  BULK PRICING
+  -----------------------------------
+  */
+
+  if (
+    activeTab ===
+    'bulk-pricing'
+  ) {
+
+    content.innerHTML =
+      renderBulkPricingReport();
+
+    initializeBulkPricing();
 
     return;
 
