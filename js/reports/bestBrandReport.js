@@ -247,16 +247,32 @@ export function initializeBestBrand() {
 
           try {
 
+            /*
+            -----------------------------------
+            REAL PRODUCT SAMPLE
+            -----------------------------------
+            */
+
+            const sampleProduct =
+              appCache.productMaster.find(
+                row =>
+                  row.brand === brand
+              );
+
+            if (!sampleProduct) {
+              return null;
+            }
+
+            /*
+            -----------------------------------
+            SOLVE PRICE
+            -----------------------------------
+            */
+
             const solved =
               solveSellingPrice({
 
-                brand,
-
-                articleType:
-                  'SAREE',
-
-                targetPayout:
-                  tp,
+                ...sampleProduct,
 
                 tp
 
