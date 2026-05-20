@@ -45,48 +45,62 @@ function normalizeGtaRow(row) {
 }
 
 async function fetchProductMaster() {
-  const { data, error } = await supabase
+
+  const query = supabase
     .from('product_master')
-    .select('*')
-    .range(0, 20000);
+    .select('*');
+
+  const { data, error } = await query.range(0, 20000);
 
   if (error) {
-    throw new Error(`PRODUCT MASTER FETCH FAILED: ${error.message}`);
+    throw new Error(
+      `PRODUCT MASTER FETCH FAILED: ${error.message}`
+    );
   }
 
   return data.map(normalizeProductRow);
 }
 
 async function fetchCommercialsMaster() {
-  const { data, error } = await supabase
+
+  const query = supabase
     .from('commercials_master')
-    .select('*')
-    .range(0, 5000);
+    .select('*');
+
+  const { data, error } = await query.range(0, 5000);
 
   if (error) {
-    throw new Error(`COMMERCIALS MASTER FETCH FAILED: ${error.message}`);
+    throw new Error(
+      `COMMERCIALS MASTER FETCH FAILED: ${error.message}`
+    );
   }
 
   return data.map(normalizeCommercialRow);
 }
 
 async function fetchGtaMaster() {
-  const { data, error } = await supabase
+
+  const query = supabase
     .from('gta_master')
-    .select('*')
-    .range(0, 5000);
+    .select('*');
+
+  const { data, error } = await query.range(0, 5000);
 
   if (error) {
-    throw new Error(`GTA MASTER FETCH FAILED: ${error.message}`);
+    throw new Error(
+      `GTA MASTER FETCH FAILED: ${error.message}`
+    );
   }
 
   return data.map(normalizeGtaRow);
 }
 
 function buildCommercialMap(data) {
+
   const map = {};
 
   data.forEach(row => {
+
     const brand = row.brand;
     const article = row.article_type;
 
@@ -99,15 +113,18 @@ function buildCommercialMap(data) {
     }
 
     map[brand][article].push(row);
+
   });
 
   return map;
 }
 
 function buildGtaMap(data) {
+
   const map = {};
 
   data.forEach(row => {
+
     const brand = row.brand;
     const article = row.article_type;
 
@@ -120,25 +137,31 @@ function buildGtaMap(data) {
     }
 
     map[brand][article].push(row);
+
   });
 
   return map;
 }
 
 function buildProductMap(data) {
+
   const map = {};
 
   data.forEach(row => {
+
     const styleId = row.style_id;
 
     map[styleId] = row;
+
   });
 
   return map;
 }
 
 export async function initializeApp() {
+
   try {
+
     console.clear();
 
     console.log('====================================');
@@ -161,15 +184,14 @@ export async function initializeApp() {
     appCache.commercialsMaster = commercialsMaster;
     appCache.gtaMaster = gtaMaster;
 
-    appCache.productMap = buildProductMap(productMaster);
+    appCache.productMap =
+      buildProductMap(productMaster);
 
-    appCache.commercialMap = buildCommercialMap(
-      commercialsMaster
-    );
+    appCache.commercialMap =
+      buildCommercialMap(commercialsMaster);
 
-    appCache.gtaMap = buildGtaMap(
-      gtaMaster
-    );
+    appCache.gtaMap =
+      buildGtaMap(gtaMaster);
 
     appCache.initialized = true;
 
@@ -196,8 +218,11 @@ export async function initializeApp() {
     window.appCache = appCache;
 
   } catch (error) {
-    console.error('APP INITIALIZATION FAILED');
-    console.error(error);
-  }
-}
 
+    console.error('APP INITIALIZATION FAILED');
+
+    console.error(error);
+
+  }
+
+}
