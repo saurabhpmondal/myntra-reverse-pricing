@@ -28,7 +28,10 @@ let filters = {
   brand: '',
   articleType: '',
   status: '',
-  search: ''
+  search: '',
+
+  continueRule: 'TP+5%',
+  otherRule: 'TP'
 };
 
 function renderContent() {
@@ -126,6 +129,16 @@ function initializeFilters() {
       'statusFilter'
     );
 
+  const continueRuleFilter =
+    document.getElementById(
+      'continueRuleFilter'
+    );
+
+  const otherRuleFilter =
+    document.getElementById(
+      'otherRuleFilter'
+    );
+
   const searchInput =
     document.getElementById(
       'globalSearch'
@@ -162,6 +175,30 @@ function initializeFilters() {
     event => {
 
       filters.status =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  continueRuleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.continueRule =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  otherRuleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.otherRule =
         event.target.value;
 
       renderContent();
