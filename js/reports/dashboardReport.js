@@ -2,144 +2,158 @@ import {
   appCache
 } from '../services/cacheService.js';
 
-function getAllStatuses() {
+function formatNumber(value) {
 
-  return [
-    ...new Set(
-      appCache.productMaster.map(
-        row => row.status
-      )
-    )
-  ]
-  .filter(Boolean)
-  .sort();
+  return Number(
+    value || 0
+  ).toLocaleString('en-IN');
 
 }
 
-function getStatusCount(status) {
+function getFilteredData(filters = {}) {
 
-  return appCache.productMaster.filter(
-    row =>
-      row.status === status
-  ).length;
-}
+  let rows = [
+    ...appCache.productMaster
+  ];
 
-function buildBrandSummary(statuses) {
+  /*
+  -----------------------------------
+  BRAND
+  -----------------------------------
+  */
 
-  const brandMap = {};
+  if (filters.brand) {
 
-  appCache.productMaster.forEach(row => {
-
-    const brand =
-      row.brand;
-
-    if (!brandMap[brand]) {
-
-      brandMap[brand] = {
-
-        brand,
-        total: 0
-
-      };
-
-      statuses.forEach(status => {
-
-        brandMap[brand][status] = 0;
-
-      });
-
-    }
-
-    brandMap[brand].total++;
-
-    if (
-      brandMap[brand][row.status]
-      !== undefined
-    ) {
-
-      brandMap[brand][
-        row.status
-      ]++;
-
-    }
-
-  });
-
-  return Object.values(
-    brandMap
-  )
-  .sort(
-    (a, b) =>
-      b.total - a.total
-  )
-  .slice(0, 20);
-
-}
-
-export function renderDashboard() {
-
-  const statuses =
-    getAllStatuses();
-
-  const brandSummary =
-    buildBrandSummary(
-      statuses
+    rows = rows.filter(row =>
+      row.brand === filters.brand
     );
+
+  }
+
+  /*
+  -----------------------------------
+  ARTICLE TYPE
+  -----------------------------------
+  */
+
+  if (filters.articleType) {
+
+    rows = rows.filter(row =>
+      row.article_type ===
+      filters.articleType
+    );
+
+  }
+
+  /*
+  -----------------------------------
+  STATUS
+  -----------------------------------
+  */
+
+  if (filters.status) {
+
+    rows = rows.filter(row =>
+      row.status === filters.status
+    );
+
+  }
+
+  /*
+  -----------------------------------
+  SEARCH
+  -----------------------------------
+  */
+
+  if (filters.search) {
+
+    const search =
+      filters.search
+        .toLowerCase();
+
+    rows = rows.filter(row => {
+
+      return [
+
+        row.style_id,
+        row.erp_sku,
+        row.brand
+
+      ]
+      .join(' ')
+      .toLowerCase()
+      .includes(search);
+
+    });
+
+  }
+
+  return rows;
+
+}
+
+function renderSystemStatus() {
 
   return `
 
     <div class="dashboard-section">
 
-      <div class="dashboard-title">
+      <div class="section-title">
         System Status
       </div>
 
-      <div class="status-grid">
+      <div class="cards-grid">
 
-        <div class="status-card">
+        <div class="summary-card">
 
-          <div class="status-label">
+          <div class="summary-title">
             CONNECTION ESTABLISHED
           </div>
 
-          <div class="status-value">
+          <div class="summary-value">
             ACTIVE
           </div>
 
         </div>
 
-        <div class="status-card">
+        <div class="summary-card">
 
-          <div class="status-label">
+          <div class="summary-title">
             PRODUCT MASTER LOADED
           </div>
 
-          <div class="status-value">
-            ${appCache.productMaster.length.toLocaleString()}
+          <div class="summary-value">
+            ${formatNumber(
+              appCache.productMaster.length
+            )}
           </div>
 
         </div>
 
-        <div class="status-card">
+        <div class="summary-card">
 
-          <div class="status-label">
+          <div class="summary-title">
             COMMERCIALS LOADED
           </div>
 
-          <div class="status-value">
-            ${appCache.commercialsMaster.length.toLocaleString()}
+          <div class="summary-value">
+            ${formatNumber(
+              appCache.commercialsMaster.length
+            )}
           </div>
 
         </div>
 
-        <div class="status-card">
+        <div class="summary-card">
 
-          <div class="status-label">
+          <div class="summary-title">
             GTA LOADED
           </div>
 
-          <div class="status-value">
-            ${appCache.gtaMaster.length.toLocaleString()}
+          <div class="summary-value">
+            ${formatNumber(
+              appCache.gtaMaster.length
+            )}
           </div>
 
         </div>
@@ -148,25 +162,50 @@ export function renderDashboard() {
 
     </div>
 
+  `;
+
+}
+
+function renderStatusDistribution(rows) {
+
+  const statusMap = {};
+
+  rows.forEach(row => {
+
+    const status =
+      row.status || 'UNKNOWN';
+
+    statusMap[status] =
+      (statusMap[status] || 0) + 1;
+
+  });
+
+  const statuses =
+    Object.entries(statusMap)
+      .sort((a, b) =>
+        b[1] - a[1]
+      );
+
+  return `
+
     <div class="dashboard-section">
 
-      <div class="dashboard-title">
+      <div class="section-title">
         Status Distribution
       </div>
 
-      <div class="status-grid">
+      <div class="cards-grid">
 
-        ${statuses.map(status => `
+        ${statuses.map(item => `
 
-          <div class="status-card">
+          <div class="summary-card">
 
-            <div class="status-label">
-              ${status}
+            <div class="summary-title">
+              ${item[0]}
             </div>
 
-            <div class="status-value">
-              ${getStatusCount(status)
-                .toLocaleString()}
+            <div class="summary-value">
+              ${formatNumber(item[1])}
             </div>
 
           </div>
@@ -177,9 +216,65 @@ export function renderDashboard() {
 
     </div>
 
+  `;
+
+}
+
+function renderBrandSnapshot(rows) {
+
+  const statusSet =
+    new Set();
+
+  const brandMap = {};
+
+  rows.forEach(row => {
+
+    const brand =
+      row.brand || 'UNKNOWN';
+
+    const status =
+      row.status || 'UNKNOWN';
+
+    statusSet.add(status);
+
+    if (!brandMap[brand]) {
+
+      brandMap[brand] = {
+
+        total: 0,
+
+        statuses: {}
+
+      };
+
+    }
+
+    brandMap[brand].total++;
+
+    brandMap[brand]
+      .statuses[status] =
+
+      (
+        brandMap[brand]
+          .statuses[status] || 0
+      ) + 1;
+
+  });
+
+  const statuses =
+    [...statusSet].sort();
+
+  const brands =
+    Object.entries(brandMap)
+      .sort((a, b) =>
+        b[1].total - a[1].total
+      );
+
+  return `
+
     <div class="dashboard-section">
 
-      <div class="dashboard-title">
+      <div class="section-title">
         Brand Snapshot
       </div>
 
@@ -197,7 +292,9 @@ export function renderDashboard() {
 
               ${statuses.map(status => `
 
-                <th>${status}</th>
+                <th>
+                  ${status}
+                </th>
 
               `).join('')}
 
@@ -207,25 +304,49 @@ export function renderDashboard() {
 
           <tbody>
 
-            ${brandSummary.map(item => `
+            ${brands.map(item => {
 
-              <tr>
+              const brand =
+                item[0];
 
-                <td>${item.brand}</td>
+              const data =
+                item[1];
 
-                <td>${item.total}</td>
+              return `
 
-                ${statuses.map(status => `
+                <tr>
 
                   <td>
-                    ${item[status] || 0}
+                    ${brand}
                   </td>
 
-                `).join('')}
+                  <td>
+                    ${formatNumber(
+                      data.total
+                    )}
+                  </td>
 
-              </tr>
+                  ${statuses.map(status => `
 
-            `).join('')}
+                    <td>
+
+                      ${formatNumber(
+
+                        data.statuses[
+                          status
+                        ] || 0
+
+                      )}
+
+                    </td>
+
+                  `).join('')}
+
+                </tr>
+
+              `;
+
+            }).join('')}
 
           </tbody>
 
@@ -235,24 +356,32 @@ export function renderDashboard() {
 
     </div>
 
+  `;
+
+}
+
+function renderQuickActions() {
+
+  return `
+
     <div class="dashboard-section">
 
-      <div class="dashboard-title">
+      <div class="section-title">
         Quick Actions
       </div>
 
-      <div class="quick-actions">
+      <div class="cards-grid">
 
         <div
           class="quick-action-card"
           data-tab-target="reverse-pricing"
         >
 
-          <div class="quick-action-title">
+          <div class="summary-value">
             Reverse Pricing
           </div>
 
-          <div class="quick-action-subtitle">
+          <div class="summary-title">
             Open pricing engine
           </div>
 
@@ -260,30 +389,15 @@ export function renderDashboard() {
 
         <div
           class="quick-action-card"
-          data-tab-target="tp-sp"
+          data-tab-target="pricing-calculator"
         >
 
-          <div class="quick-action-title">
-            TP → SP Calculator
+          <div class="summary-value">
+            Pricing Calculator
           </div>
 
-          <div class="quick-action-subtitle">
-            Derive SP from TP
-          </div>
-
-        </div>
-
-        <div
-          class="quick-action-card"
-          data-tab-target="sp-tp"
-        >
-
-          <div class="quick-action-title">
-            SP → TP Calculator
-          </div>
-
-          <div class="quick-action-subtitle">
-            Calculate payout
+          <div class="summary-title">
+            Settlement simulator
           </div>
 
         </div>
@@ -293,12 +407,27 @@ export function renderDashboard() {
           data-tab-target="best-brand"
         >
 
-          <div class="quick-action-title">
+          <div class="summary-value">
             Best Brand
           </div>
 
-          <div class="quick-action-subtitle">
-            Compare brand profitability
+          <div class="summary-title">
+            Compare profitability
+          </div>
+
+        </div>
+
+        <div
+          class="quick-action-card"
+          data-tab-target="export-center"
+        >
+
+          <div class="summary-value">
+            Export Center
+          </div>
+
+          <div class="summary-title">
+            Download reports
           </div>
 
         </div>
@@ -308,4 +437,34 @@ export function renderDashboard() {
     </div>
 
   `;
+
+}
+
+export function renderDashboard(
+  filters = {}
+) {
+
+  const rows =
+    getFilteredData(filters);
+
+  return `
+
+    <div class="dashboard-wrapper">
+
+      ${renderSystemStatus()}
+
+      ${renderStatusDistribution(
+        rows
+      )}
+
+      ${renderBrandSnapshot(
+        rows
+      )}
+
+      ${renderQuickActions()}
+
+    </div>
+
+  `;
+
 }
