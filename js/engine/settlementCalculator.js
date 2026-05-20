@@ -1,419 +1,474 @@
 import {
-  BUSINESS_RULES
-} from '../config/businessRules.js';
+  findCommercial
+} from '../services/commercialMatcher.js';
 
 import {
-  calculateGTA
-} from './gtaCalculator.js';
+  findGTA
+} from '../services/gtaMatcher.js';
 
-import {
-  calculateCommercials
-} from './commercialCalculator.js';
+/*
+-----------------------------------
+SAFE NUMBER
+-----------------------------------
+*/
 
-import {
-  calculateCODB
-} from './codbCalculator.js';
+function safeNumber(value) {
+
+  const number =
+    Number(value);
+
+  if (
+    Number.isNaN(number) ||
+    !Number.isFinite(number)
+  ) {
+
+    return 0;
+
+  }
+
+  return number;
+
+}
+
+/*
+-----------------------------------
+ROUND
+-----------------------------------
+*/
 
 function round2(value) {
+
   return Number(
-    Number(value || 0).toFixed(2)
+    safeNumber(value)
+      .toFixed(2)
   );
+
 }
 
-function ceil(value) {
-  return Math.ceil(
-    Number(value || 0)
-  );
-}
+/*
+-----------------------------------
+MAIN CALCULATOR
+-----------------------------------
+*/
 
 export function calculateSettlement({
+
   brand,
   articleType,
+
   sellingPrice,
-  tp = 0,
-  mrp = 0
+  tp = 0
+
 }) {
 
-  const SP =
-    Number(sellingPrice);
-
-  const TP =
-    Number(tp);
-
-  const MRP =
-    Number(mrp);
-
-  /*
-  -----------------------------------
-  GTA
-  -----------------------------------
-  */
-
-  const gtaData =
-    calculateGTA({
-      brand,
-      articleType,
-      sellingPrice: SP
-    });
-
-  const gtaCharge =
-    round2(gtaData.gtaCharge);
-
-  /*
-  -----------------------------------
-  SELLER PRICE
-  -----------------------------------
-  */
-
-  const sellerPrice =
-    round2(
-      SP - gtaCharge
-    );
-
-  /*
-  -----------------------------------
-  COMMERCIALS
-  -----------------------------------
-  */
-
-  const commercialData =
-    calculateCommercials({
-      brand,
-      articleType,
-      sellerPrice
-    });
-
-  const commissionPercent =
-    commercialData.commissionPercent;
-
-  const commissionRs =
-    round2(
-      sellerPrice *
-      (
-        commissionPercent / 100
-      )
-    );
-
-  const fixedFee =
-    round2(
-      commercialData.fixedFee
-    );
-
-  /*
-  -----------------------------------
-  GST ON COM + FIXED FEE
-  -----------------------------------
-  */
-
-  const gstOnComAndFee =
-    ceil(
-      (
-        commissionRs +
-        fixedFee
-      ) *
-      (
-        BUSINESS_RULES.GST_PERCENT / 100
-      )
-    );
-
-  /*
-  -----------------------------------
-  UPLOAD SETTLEMENT
-  -----------------------------------
-  */
-
-  const uploadSettlement =
-    round2(
-      sellerPrice -
-      commissionRs -
-      fixedFee -
-      gstOnComAndFee
-    );
-
-  /*
-  -----------------------------------
-  TDS + TCS
-  -----------------------------------
-  */
-
-  const tds =
-    round2(
-      sellerPrice *
-      (
-        BUSINESS_RULES.TDS_PERCENT / 100
-      )
-    );
-
-  const tcs =
-    round2(
-      sellerPrice *
-      (
-        BUSINESS_RULES.TCS_PERCENT / 100
-      )
-    );
-
-  const totalTaxDeduction =
-    round2(
-      tds + tcs
-    );
-
-  /*
-  -----------------------------------
-  BANK SETTLEMENT
-  -----------------------------------
-  */
-
-  const bankSettlement =
-    round2(
-      uploadSettlement -
-      totalTaxDeduction
-    );
-
-  /*
-  -----------------------------------
-  ROYALTY + MARKETING
-  -----------------------------------
-  */
-
-  const royaltyPercent =
-    commercialData.royaltyPercent;
-
-  const marketingPercent =
-    commercialData.marketingPercent;
-
-  const royalty =
-    round2(
-      SP *
-      (
-        royaltyPercent / 100
-      )
-    );
-
-  const marketing =
-    round2(
-      SP *
-      (
-        marketingPercent / 100
-      )
-    );
-
-  const gstOnRoyaltyMarketing =
-    round2(
-      (
-        royalty +
-        marketing
-      ) *
-      (
-        BUSINESS_RULES.GST_PERCENT / 100
-      )
-    );
-
-  /*
-  -----------------------------------
-  PAYOUT BEFORE CODB
-  -----------------------------------
-  */
-
-  const payoutBeforeCODB =
-    round2(
-      bankSettlement -
-      royalty -
-      marketing -
-      gstOnRoyaltyMarketing
-    );
-
-  /*
-  -----------------------------------
-  DISPATCH COST
-  -----------------------------------
-  */
-
-  const dispatchCost =
-    SP < 1000
-      ? BUSINESS_RULES.DISPATCH_BELOW_1000
-      : BUSINESS_RULES.DISPATCH_ABOVE_1000;
-
-  /*
-  -----------------------------------
-  CODB
-  -----------------------------------
-  */
-
-  const codbData =
-    calculateCODB({
-      fixedFee,
-      returnFee:
-        commercialData.returnFee
-    });
-
-  /*
-  -----------------------------------
-  FINAL PAYOUT
-  -----------------------------------
-  */
-
-  const payoutAfterCODB =
-    round2(
-      payoutBeforeCODB -
-      dispatchCost -
-      codbData.rtvCodb
-    );
-
-  /*
-  -----------------------------------
-  TP PROFIT
-  -----------------------------------
-  */
-
-  const tpProfitRs =
-    round2(
-      payoutAfterCODB - TP
-    );
-
-  const tpProfitPercent =
-    TP > 0
-      ? round2(
-          (
-            tpProfitRs / TP
-          ) * 100
-        )
-      : 0;
-
-  /*
-  -----------------------------------
-  TD %
-  -----------------------------------
-  */
-
-  const tradeDiscount =
-    MRP > 0
-      ? round2(
-          (
-            (
-              MRP - SP
-            ) / MRP
-          ) * 100
-        )
-      : 0;
-
-  return {
+  try {
 
     /*
-    INPUTS
+    -----------------------------------
+    INPUT NORMALIZATION
+    -----------------------------------
     */
 
-    brand,
-    articleType,
+    sellingPrice =
+      safeNumber(sellingPrice);
 
-    mrp: MRP,
-    tp: TP,
-
-    sellingPrice: SP,
+    tp =
+      safeNumber(tp);
 
     /*
-    GTA
+    -----------------------------------
+    GTA LOOKUP
+    -----------------------------------
     */
 
-    gtaCharge,
+    const gtaData =
+      findGTA({
+
+        brand,
+        articleType,
+
+        sellingPrice
+
+      });
+
+    if (!gtaData) {
+
+      return null;
+
+    }
+
+    const gtaCharge =
+      safeNumber(
+        gtaData.gta_charges
+      );
 
     /*
-    SELLER PRICE
+    -----------------------------------
+    SP1
+    -----------------------------------
     */
 
-    sellerPrice,
+    const sellerPrice =
+      round2(
+        sellingPrice -
+        gtaCharge
+      );
 
     /*
-    COMMERCIALS
+    -----------------------------------
+    COMMERCIAL LOOKUP
+    -----------------------------------
     */
 
-    commissionPercent,
-    commissionRs,
+    const commercial =
+      findCommercial({
 
-    fixedFee,
+        brand,
+        articleType,
+
+        sellerPrice
+
+      });
+
+    if (!commercial) {
+
+      return null;
+
+    }
 
     /*
+    -----------------------------------
+    COMMERCIAL VALUES
+    -----------------------------------
+    */
+
+    const commissionPercent =
+      safeNumber(
+        commercial.commission
+      );
+
+    const royaltyPercent =
+      safeNumber(
+        commercial.royalty
+      );
+
+    const marketingPercent =
+      safeNumber(
+        commercial.marketing
+      );
+
+    const fixedFee =
+      safeNumber(
+        commercial.fixed_fee
+      );
+
+    /*
+    -----------------------------------
+    COMMISSION
+    -----------------------------------
+    */
+
+    const commissionRs =
+      round2(
+        sellerPrice *
+        commissionPercent /
+        100
+      );
+
+    /*
+    -----------------------------------
     GST
+    -----------------------------------
     */
 
-    gstOnComAndFee,
+    const gstOnComAndFee =
+      round2(
+        (
+          commissionRs +
+          fixedFee
+        ) * 0.18
+      );
 
     /*
-    UPLOAD
+    -----------------------------------
+    UPLOAD SETTLEMENT
+    -----------------------------------
     */
 
-    uploadSettlement,
+    const uploadSettlement =
+      round2(
+
+        sellerPrice -
+        commissionRs -
+        fixedFee -
+        gstOnComAndFee
+
+      );
 
     /*
-    TAXES
+    -----------------------------------
+    TDS + TCS
+    -----------------------------------
     */
 
-    tds,
-    tcs,
-
-    totalTaxDeduction,
+    const totalTaxDeduction =
+      round2(
+        sellerPrice *
+        0.006
+      );
 
     /*
-    BANK
+    -----------------------------------
+    BANK SETTLEMENT
+    -----------------------------------
     */
 
-    bankSettlement,
+    const bankSettlement =
+      round2(
+        uploadSettlement -
+        totalTaxDeduction
+      );
 
     /*
+    -----------------------------------
     ROYALTY
+    -----------------------------------
     */
 
-    royaltyPercent,
-    royalty,
-
-    marketingPercent,
-    marketing,
-
-    gstOnRoyaltyMarketing,
-
-    /*
-    PAYOUT
-    */
-
-    payoutBeforeCODB,
-
-    /*
-    DISPATCH
-    */
-
-    dispatchCost,
-
-    /*
-    CODB
-    */
-
-    baseReturnCost:
+    const royalty =
       round2(
-        codbData.baseReturnCost
-      ),
-
-    returnCost:
-      round2(
-        codbData.returnCost
-      ),
-
-    rtvPercent:
-      codbData.rtvPercent,
-
-    rtvCodb:
-      round2(
-        codbData.rtvCodb
-      ),
+        sellingPrice *
+        royaltyPercent /
+        100
+      );
 
     /*
-    FINAL
+    -----------------------------------
+    MARKETING
+    -----------------------------------
     */
 
-    payoutAfterCODB,
+    const marketing =
+      round2(
+        sellingPrice *
+        marketingPercent /
+        100
+      );
 
-    tpProfitRs,
+    /*
+    -----------------------------------
+    GST ON R&M
+    -----------------------------------
+    */
 
-    tpProfitPercent,
+    const gstOnRoyaltyMarketing =
+      round2(
+        (
+          royalty +
+          marketing
+        ) * 0.18
+      );
 
-    tradeDiscount
-  };
+    /*
+    -----------------------------------
+    PAYOUT BEFORE CODB
+    -----------------------------------
+    */
+
+    const payoutBeforeCODB =
+      round2(
+
+        bankSettlement -
+        royalty -
+        marketing -
+        gstOnRoyaltyMarketing
+
+      );
+
+    /*
+    -----------------------------------
+    DISPATCH COST
+    -----------------------------------
+    */
+
+    const dispatchCost =
+      sellingPrice < 1000
+        ? 25
+        : 30;
+
+    /*
+    -----------------------------------
+    RETURN CHARGE
+    -----------------------------------
+    */
+
+    const returnCharge =
+      233;
+
+    /*
+    -----------------------------------
+    RETURN COST
+    -----------------------------------
+    */
+
+    const returnCost =
+      round2(
+
+        (
+          fixedFee +
+          returnCharge
+        ) * 1.18
+
+      );
+
+    /*
+    -----------------------------------
+    RETURN %
+    -----------------------------------
+    */
+
+    const returnPercent =
+      35;
+
+    /*
+    -----------------------------------
+    RTV CODB
+    -----------------------------------
+    */
+
+    const rtvCodb =
+      round2(
+
+        (
+          returnCost *
+          returnPercent
+        ) /
+
+        (
+          100 -
+          returnPercent
+        )
+
+      );
+
+    /*
+    -----------------------------------
+    FINAL PAYOUT
+    -----------------------------------
+    */
+
+    const payoutAfterCODB =
+      round2(
+
+        payoutBeforeCODB -
+        dispatchCost -
+        rtvCodb
+
+      );
+
+    /*
+    -----------------------------------
+    TP PROFIT
+    -----------------------------------
+    */
+
+    const tpProfitRs =
+      round2(
+        payoutAfterCODB - tp
+      );
+
+    const tpProfitPercent =
+      tp > 0
+
+        ? round2(
+            (
+              tpProfitRs / tp
+            ) * 100
+          )
+
+        : 0;
+
+    /*
+    -----------------------------------
+    TRADE DISCOUNT
+    -----------------------------------
+    */
+
+    const tradeDiscount =
+      sellingPrice > 0
+
+        ? round2(
+            (
+              (
+                sellingPrice -
+                sellerPrice
+              ) /
+
+              sellingPrice
+            ) * 100
+          )
+
+        : 0;
+
+    /*
+    -----------------------------------
+    FINAL SAFE OBJECT
+    -----------------------------------
+    */
+
+    return {
+
+      sellingPrice,
+
+      gtaCharge,
+
+      sellerPrice,
+
+      commissionPercent,
+      commissionRs,
+
+      fixedFee,
+
+      gstOnComAndFee,
+
+      uploadSettlement,
+
+      totalTaxDeduction,
+
+      bankSettlement,
+
+      royalty,
+      marketing,
+
+      payoutBeforeCODB,
+
+      dispatchCost,
+
+      returnCharge,
+
+      returnCost,
+
+      rtvCodb,
+
+      payoutAfterCODB,
+
+      tpProfitRs,
+
+      tpProfitPercent,
+
+      tradeDiscount
+
+    };
+
+  } catch (error) {
+
+    console.error(
+      'SETTLEMENT ERROR:',
+      error
+    );
+
+    return null;
+
+  }
+
 }
