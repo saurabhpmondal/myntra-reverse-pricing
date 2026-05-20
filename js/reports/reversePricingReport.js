@@ -88,13 +88,45 @@ function filterProducts({
 
 }
 
-function buildRows(products) {
+function getRuleForStatus(
+  product,
+  filters
+) {
+
+  if (
+    product.status ===
+    'CONTINUE'
+  ) {
+
+    return (
+      filters.continueRule ||
+      'TP+5%'
+    );
+
+  }
+
+  return (
+    filters.otherRule ||
+    'TP'
+  );
+}
+
+function buildRows(
+  products,
+  filters
+) {
 
   const rows = [];
 
   products.forEach(product => {
 
     try {
+
+      const selectedRule =
+        getRuleForStatus(
+          product,
+          filters
+        );
 
       const pricingLadder =
         generatePricingLadder({
@@ -116,90 +148,135 @@ function buildRows(products) {
 
         });
 
-      pricingLadder.forEach(item => {
+      const matchedRule =
+        pricingLadder.find(
+          item =>
+            item.pricingRule ===
+            selectedRule
+        );
 
-        const s =
-          item.settlement;
+      if (!matchedRule) {
+        return;
+      }
 
-        rows.push(`
+      const s =
+        matchedRule.settlement;
 
-          <tr>
+      rows.push(`
 
-            <td>${product.style_id}</td>
+        <tr>
 
-            <td>${product.erp_sku}</td>
+          <td>${product.style_id}</td>
 
-            <td>${product.brand}</td>
+          <td>${product.erp_sku}</td>
 
-            <td>${product.article_type}</td>
+          <td>${product.brand}</td>
 
-            <td>${product.status}</td>
+          <td>${product.article_type}</td>
 
-            <td>${formatNumber(product.tp)}</td>
+          <td>${product.status}</td>
 
-            <td>${item.pricingRule}</td>
+          <td>${formatNumber(product.tp)}</td>
 
-            <td>${formatNumber(item.derivedSP)}</td>
+          <td>${matchedRule.pricingRule}</td>
 
-            <td>${formatNumber(product.mrp)}</td>
+          <td>${formatNumber(
+            matchedRule.derivedSP
+          )}</td>
 
-            <td>${formatNumber(s.tradeDiscount)}%</td>
+          <td>${formatNumber(product.mrp)}</td>
 
-            <td>${formatNumber(s.gtaCharge)}</td>
+          <td>${formatNumber(
+            s.tradeDiscount
+          )}%</td>
 
-            <td>${formatNumber(s.sellerPrice)}</td>
+          <td>${formatNumber(
+            s.gtaCharge
+          )}</td>
 
-            <td>${formatNumber(s.commissionPercent)}%</td>
+          <td>${formatNumber(
+            s.sellerPrice
+          )}</td>
 
-            <td>${formatNumber(s.commissionRs)}</td>
+          <td>${formatNumber(
+            s.commissionPercent
+          )}%</td>
 
-            <td>${formatNumber(s.fixedFee)}</td>
+          <td>${formatNumber(
+            s.commissionRs
+          )}</td>
 
-            <td>${formatNumber(s.gstOnComAndFee)}</td>
+          <td>${formatNumber(
+            s.fixedFee
+          )}</td>
 
-            <td>${formatNumber(s.uploadSettlement)}</td>
+          <td>${formatNumber(
+            s.gstOnComAndFee
+          )}</td>
 
-            <td>${formatNumber(s.totalTaxDeduction)}</td>
+          <td>${formatNumber(
+            s.uploadSettlement
+          )}</td>
 
-            <td>${formatNumber(s.bankSettlement)}</td>
+          <td>${formatNumber(
+            s.totalTaxDeduction
+          )}</td>
 
-            <td>${formatNumber(s.royalty)}</td>
+          <td>${formatNumber(
+            s.bankSettlement
+          )}</td>
 
-            <td>${formatNumber(s.marketing)}</td>
+          <td>${formatNumber(
+            s.royalty
+          )}</td>
 
-            <td>${formatNumber(s.payoutBeforeCODB)}</td>
+          <td>${formatNumber(
+            s.marketing
+          )}</td>
 
-            <td>${formatNumber(s.dispatchCost)}</td>
+          <td>${formatNumber(
+            s.payoutBeforeCODB
+          )}</td>
 
-            <td>${formatNumber(s.returnCost)}</td>
+          <td>${formatNumber(
+            s.dispatchCost
+          )}</td>
 
-            <td>${formatNumber(s.rtvCodb)}</td>
+          <td>${formatNumber(
+            s.returnCost
+          )}</td>
 
-            <td>${formatNumber(s.payoutAfterCODB)}</td>
+          <td>${formatNumber(
+            s.rtvCodb
+          )}</td>
 
-            <td class="${getProfitClass(
+          <td>${formatNumber(
+            s.payoutAfterCODB
+          )}</td>
+
+          <td class="${getProfitClass(
+            s.tpProfitRs
+          )}">
+
+            ${formatNumber(
               s.tpProfitRs
-            )}">
+            )}
 
-              ${formatNumber(s.tpProfitRs)}
+          </td>
 
-            </td>
+          <td class="${getProfitClass(
+            s.tpProfitPercent
+          )}">
 
-            <td class="${getProfitClass(
+            ${formatNumber(
               s.tpProfitPercent
-            )}">
+            )}%
 
-              ${formatNumber(
-                s.tpProfitPercent
-              )}%
+          </td>
 
-            </td>
+        </tr>
 
-          </tr>
-
-        `);
-
-      });
+      `);
 
     } catch (error) {
 
@@ -213,7 +290,9 @@ function buildRows(products) {
 
 }
 
-export function renderReversePricingReport(filters) {
+export function renderReversePricingReport(
+  filters
+) {
 
   const filteredProducts =
     filterProducts(filters)
@@ -236,7 +315,10 @@ export function renderReversePricingReport(filters) {
   }
 
   const tableRows =
-    buildRows(filteredProducts);
+    buildRows(
+      filteredProducts,
+      filters
+    );
 
   return `
 
