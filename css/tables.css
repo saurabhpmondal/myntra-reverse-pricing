@@ -1,1 +1,119 @@
-/* TABLES CSS */
+.report-table-wrapper {
+
+  width: 100%;
+
+  overflow-x: auto;
+
+  border-radius: var(--radius-md);
+
+  border: 1px solid var(--border-color);
+
+  background: white;
+
+}
+
+.report-table {
+
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 2200px;
+
+}
+
+.report-table thead {
+
+  background: #f9fafb;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 5;
+
+}
+
+.report-table th {
+
+  padding: 14px 12px;
+
+  text-align: left;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  color: var(--secondary-text);
+
+  border-bottom: 1px solid var(--border-color);
+
+  white-space: nowrap;
+
+}
+
+.report-table td {
+
+  padding: 12px;
+
+  font-size: 13px;
+
+  border-bottom: 1px solid #f1f5f9;
+
+  white-space: nowrap;
+
+}
+
+.report-table tbody tr:hover {
+
+  background: #fafafa;
+
+}
+
+.profit-positive {
+
+  color: var(--success-color);
+
+  font-weight: 700;
+
+}
+
+.profit-negative {
+
+  color: var(--danger-color);
+
+  font-weight: 700;
+
+}
+
+.loading-state {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  height: 240px;
+
+  font-size: 18px;
+
+  color: var(--secondary-text);
+
+}
+
+.empty-state {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  height: 240px;
+
+  font-size: 18px;
+
+  color: var(--secondary-text);
+
+}
