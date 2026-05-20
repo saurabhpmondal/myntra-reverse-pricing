@@ -2,8 +2,6 @@ import {
   appCache
 } from '../services/cacheService.js';
 
-let debounceTimer = null;
-
 function getUniqueValues(
   data,
   field
@@ -131,6 +129,84 @@ export function renderFilters() {
         <div class="filter-group">
 
           <label class="filter-label">
+            Continue Rule
+          </label>
+
+          <select
+            class="filter-select"
+            id="continueRuleFilter"
+          >
+
+            <option value="TP+5%">
+              TP+5%
+            </option>
+
+            <option value="TP">
+              TP
+            </option>
+
+            <option value="TP-5%">
+              TP-5%
+            </option>
+
+            <option value="TP-10%">
+              TP-10%
+            </option>
+
+            <option value="TP-15%">
+              TP-15%
+            </option>
+
+          </select>
+
+        </div>
+
+        <div class="filter-group">
+
+          <label class="filter-label">
+            Other Status Rule
+          </label>
+
+          <select
+            class="filter-select"
+            id="otherRuleFilter"
+          >
+
+            <option value="TP">
+              TP
+            </option>
+
+            <option value="TP-5%">
+              TP-5%
+            </option>
+
+            <option value="TP-10%">
+              TP-10%
+            </option>
+
+            <option value="TP-15%">
+              TP-15%
+            </option>
+
+            <option value="TP-20%">
+              TP-20%
+            </option>
+
+            <option value="TP-30%">
+              TP-30%
+            </option>
+
+            <option value="TP-40%">
+              TP-40%
+            </option>
+
+          </select>
+
+        </div>
+
+        <div class="filter-group">
+
+          <label class="filter-label">
             Search
           </label>
 
@@ -148,37 +224,4 @@ export function renderFilters() {
     </div>
 
   `;
-}
-
-export function initializeFilters() {
-
-  const searchInput =
-    document.getElementById(
-      'globalSearch'
-    );
-
-  if (!searchInput) {
-    return;
-  }
-
-  searchInput.addEventListener(
-    'input',
-    event => {
-
-      clearTimeout(
-        debounceTimer
-      );
-
-      debounceTimer =
-        setTimeout(() => {
-
-          console.log(
-            'SEARCH:',
-            event.target.value
-          );
-
-        }, 300);
-
-    }
-  );
 }
