@@ -326,7 +326,7 @@ export function initializeBestBrand() {
 
             /*
             -----------------------------------
-            REAL PRODUCT SAMPLE
+            SAMPLE PRODUCT
             -----------------------------------
             */
 
@@ -347,18 +347,42 @@ export function initializeBestBrand() {
 
             /*
             -----------------------------------
-            SOLVE PRICE
+            SOLVE SP
+            TP + 0%
             -----------------------------------
             */
 
             const solved =
-              solveSellingPrice({
+              solveSellingPrice(
 
-                ...sampleProduct,
+                {
 
-                tp
+                  styleId:
+                    sampleProduct.style_id,
 
-              });
+                  erpSku:
+                    sampleProduct.erp_sku,
+
+                  brand:
+                    sampleProduct.brand,
+
+                  articleType:
+                    sampleProduct.article_type,
+
+                  status:
+                    sampleProduct.status,
+
+                  mrp:
+                    Number(
+                      sampleProduct.mrp || 0
+                    ),
+
+                  tp
+
+                },
+
+                0
+              );
 
             if (!solved) {
               return null;
@@ -429,7 +453,10 @@ export function initializeBestBrand() {
 
           } catch (error) {
 
-            console.error(error);
+            console.error(
+              brand,
+              error
+            );
 
             return null;
 
