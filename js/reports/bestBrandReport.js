@@ -90,12 +90,38 @@ function getSuggestionClass(
 
 }
 
-function getUniqueBrands() {
+function getUniqueBrands(
+  articleType
+) {
+
+  return [
+    ...new Set(
+
+      appCache.productMaster
+
+        .filter(
+          row =>
+            row.article_type ===
+            articleType
+        )
+
+        .map(
+          row => row.brand
+        )
+
+    )
+  ]
+  .filter(Boolean)
+  .sort();
+
+}
+
+function getUniqueArticleTypes() {
 
   return [
     ...new Set(
       appCache.productMaster.map(
-        row => row.brand
+        row => row.article_type
       )
     )
   ]
@@ -143,11 +169,39 @@ function buildMetricRow(
 
 export function renderBestBrandReport() {
 
+  const articleTypes =
+    getUniqueArticleTypes();
+
   return `
 
     <div class="calculator-wrapper">
 
       <div class="calculator-grid">
+
+        <div class="filter-group">
+
+          <label class="filter-label">
+
+            ARTICLE TYPE
+
+          </label>
+
+          <select
+            class="filter-select"
+            id="bestBrandArticleType"
+          >
+
+            ${articleTypes.map(item => `
+
+              <option value="${item}">
+                ${item}
+              </option>
+
+            `).join('')}
+
+          </select>
+
+        </div>
 
         <div class="filter-group">
 
@@ -223,6 +277,11 @@ export function initializeBestBrand() {
           ).value
         );
 
+      const articleType =
+        document.getElementById(
+          'bestBrandArticleType'
+        ).value;
+
       if (!tp) {
 
         resultContainer.innerHTML = `
@@ -240,7 +299,25 @@ export function initializeBestBrand() {
       }
 
       const brands =
-        getUniqueBrands();
+        getUniqueBrands(
+          articleType
+        );
+
+      if (!brands.length) {
+
+        resultContainer.innerHTML = `
+
+          <div class="empty-state">
+
+            No brands found
+
+          </div>
+
+        `;
+
+        return;
+
+      }
 
       const results =
         brands.map(brand => {
@@ -256,7 +333,12 @@ export function initializeBestBrand() {
             const sampleProduct =
               appCache.productMaster.find(
                 row =>
-                  row.brand === brand
+
+                  row.brand === brand &&
+
+                  row.article_type ===
+                  articleType
+
               );
 
             if (!sampleProduct) {
