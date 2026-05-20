@@ -388,15 +388,24 @@ export function initializeBestBrand() {
               return null;
             }
 
+            /*
+            -----------------------------------
+            SOLVER RETURNS
+            DIRECT SETTLEMENT
+            -----------------------------------
+            */
+
             const s =
-              solved.settlement;
+              solved;
 
             return {
 
               brand,
 
               sp:
-                solved.sellingPrice,
+                solved.sellingPrice ||
+                solved.sp ||
+                0,
 
               gta:
                 s.gtaCharge,
