@@ -1,6 +1,22 @@
-import { appCache } from '../services/cacheService.js';
+import {
+  appCache
+} from '../services/cacheService.js';
 
-import { findMatchingSlab } from './slabMatcher.js';
+import {
+  findMatchingSlab
+} from './slabMatcher.js';
+
+function defaultGTA() {
+
+  return {
+
+    slab: null,
+
+    gtaCharge: 0
+
+  };
+
+}
 
 export function calculateGTA({
   brand,
@@ -11,19 +27,42 @@ export function calculateGTA({
   const brandData =
     appCache.gtaMap?.[brand];
 
+  /*
+  -----------------------------------
+  BRAND NOT FOUND
+  -----------------------------------
+  */
+
   if (!brandData) {
-    throw new Error(
+
+    console.warn(
       `GTA BRAND NOT FOUND: ${brand}`
     );
+
+    return defaultGTA();
+
   }
 
   const slabs =
     brandData?.[articleType];
 
-  if (!slabs || !slabs.length) {
-    throw new Error(
+  /*
+  -----------------------------------
+  ARTICLE TYPE NOT FOUND
+  -----------------------------------
+  */
+
+  if (
+    !slabs ||
+    !slabs.length
+  ) {
+
+    console.warn(
       `GTA ARTICLE TYPE NOT FOUND: ${articleType}`
     );
+
+    return defaultGTA();
+
   }
 
   const matchingSlab =
@@ -32,16 +71,31 @@ export function calculateGTA({
       sellingPrice
     );
 
+  /*
+  -----------------------------------
+  NO SLAB FOUND
+  -----------------------------------
+  */
+
   if (!matchingSlab) {
-    throw new Error(
+
+    console.warn(
       `NO GTA SLAB FOUND FOR SP: ${sellingPrice}`
     );
+
+    return defaultGTA();
+
   }
 
   return {
+
     slab: matchingSlab,
-    gtaCharge: Number(
-      matchingSlab.gta_charges || 0
-    )
+
+    gtaCharge:
+      Number(
+        matchingSlab.gta_charges || 0
+      )
+
   };
+
 }
