@@ -200,3 +200,4 @@ export async function initializeApp() {
     console.error(error);
   }
 }
+
