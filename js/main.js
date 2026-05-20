@@ -31,6 +31,11 @@ import {
   initializePricingCalculator
 } from './calculators/pricingCalculator.js';
 
+import {
+  renderBestBrandReport,
+  initializeBestBrand
+} from './reports/bestBrandReport.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
@@ -44,12 +49,6 @@ let filters = {
   otherRule: 'TP'
 
 };
-
-/*
------------------------------------
-MAIN CONTENT RENDER
------------------------------------
-*/
 
 function renderContent() {
 
@@ -133,16 +132,10 @@ function renderContent() {
     'best-brand'
   ) {
 
-    content.innerHTML = `
+    content.innerHTML =
+      renderBestBrandReport();
 
-      <div class="placeholder-content">
-
-        BEST BRAND MODULE
-        COMING NEXT
-
-      </div>
-
-    `;
+    initializeBestBrand();
 
     return;
 
@@ -193,12 +186,6 @@ function renderContent() {
   `;
 }
 
-/*
------------------------------------
-ACTIVE TAB UI
------------------------------------
-*/
-
 function setActiveTabUI() {
 
   document
@@ -224,12 +211,6 @@ function setActiveTabUI() {
 
 }
 
-/*
------------------------------------
-SWITCH TAB
------------------------------------
-*/
-
 function switchTab(tabId) {
 
   activeTab = tabId;
@@ -239,12 +220,6 @@ function switchTab(tabId) {
   renderContent();
 
 }
-
-/*
------------------------------------
-QUICK ACTIONS
------------------------------------
-*/
 
 function initializeQuickActions() {
 
@@ -270,12 +245,6 @@ function initializeQuickActions() {
 
 }
 
-/*
------------------------------------
-TAB INITIALIZATION
------------------------------------
-*/
-
 function initializeTabs() {
 
   const tabButtons =
@@ -299,12 +268,6 @@ function initializeTabs() {
   });
 
 }
-
-/*
------------------------------------
-FILTERS
------------------------------------
-*/
 
 function initializeFilters() {
 
@@ -340,12 +303,6 @@ function initializeFilters() {
 
   let debounceTimer = null;
 
-  /*
-  -----------------------------------
-  BRAND
-  -----------------------------------
-  */
-
   brandFilter.addEventListener(
     'change',
     event => {
@@ -357,12 +314,6 @@ function initializeFilters() {
 
     }
   );
-
-  /*
-  -----------------------------------
-  ARTICLE TYPE
-  -----------------------------------
-  */
 
   articleFilter.addEventListener(
     'change',
@@ -376,12 +327,6 @@ function initializeFilters() {
     }
   );
 
-  /*
-  -----------------------------------
-  STATUS
-  -----------------------------------
-  */
-
   statusFilter.addEventListener(
     'change',
     event => {
@@ -393,12 +338,6 @@ function initializeFilters() {
 
     }
   );
-
-  /*
-  -----------------------------------
-  CONTINUE RULE
-  -----------------------------------
-  */
 
   continueRuleFilter.addEventListener(
     'change',
@@ -412,12 +351,6 @@ function initializeFilters() {
     }
   );
 
-  /*
-  -----------------------------------
-  OTHER RULE
-  -----------------------------------
-  */
-
   otherRuleFilter.addEventListener(
     'change',
     event => {
@@ -429,12 +362,6 @@ function initializeFilters() {
 
     }
   );
-
-  /*
-  -----------------------------------
-  SEARCH
-  -----------------------------------
-  */
 
   searchInput.addEventListener(
     'input',
@@ -458,12 +385,6 @@ function initializeFilters() {
   );
 
 }
-
-/*
------------------------------------
-BOOTSTRAP UI
------------------------------------
-*/
 
 async function bootstrapUI() {
 
@@ -506,12 +427,6 @@ async function bootstrapUI() {
   renderContent();
 
 }
-
-/*
------------------------------------
-APP START
------------------------------------
-*/
 
 document.addEventListener(
   'DOMContentLoaded',
