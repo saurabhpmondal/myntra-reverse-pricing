@@ -326,86 +326,38 @@ export function initializeBestBrand() {
 
             /*
             -----------------------------------
-            SAMPLE PRODUCT
-            -----------------------------------
-            */
-
-            const sampleProduct =
-              appCache.productMaster.find(
-                row =>
-
-                  row.brand === brand &&
-
-                  row.article_type ===
-                  articleType
-
-              );
-
-            if (!sampleProduct) {
-              return null;
-            }
-
-            /*
-            -----------------------------------
-            SOLVE SP
-            TP + 0%
+            SAME ENGINE AS
+            PRICING CALCULATOR
             -----------------------------------
             */
 
             const solved =
-              solveSellingPrice(
+              solveSellingPrice({
 
-                {
+                brand,
 
-                  styleId:
-                    sampleProduct.style_id,
+                articleType,
 
-                  erpSku:
-                    sampleProduct.erp_sku,
+                targetPayout:
+                  tp,
 
-                  brand:
-                    sampleProduct.brand,
+                tp
 
-                  articleType:
-                    sampleProduct.article_type,
-
-                  status:
-                    sampleProduct.status,
-
-                  mrp:
-                    Number(
-                      sampleProduct.mrp || 0
-                    ),
-
-                  tp
-
-                },
-
-                0
-              );
+              });
 
             if (!solved) {
               return null;
             }
 
-            /*
-            -----------------------------------
-            SOLVER RETURNS
-            DIRECT SETTLEMENT
-            -----------------------------------
-            */
-
             const s =
-              solved;
+              solved.settlement;
 
             return {
 
               brand,
 
               sp:
-                solved.sellingPrice ||
-                solved.sp ||
-                0,
+                solved.sellingPrice,
 
               gta:
                 s.gtaCharge,
