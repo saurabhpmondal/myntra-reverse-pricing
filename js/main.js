@@ -22,6 +22,10 @@ import {
   renderReversePricingReport
 } from './reports/reversePricingReport.js';
 
+import {
+  renderDashboard
+} from './reports/dashboardReport.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
@@ -43,6 +47,20 @@ function renderContent() {
 
   if (!content) {
     return;
+  }
+
+  if (
+    activeTab ===
+    'dashboard'
+  ) {
+
+    content.innerHTML =
+      renderDashboard();
+
+    initializeQuickActions();
+
+    return;
+
   }
 
   if (
@@ -71,6 +89,65 @@ function renderContent() {
   `;
 }
 
+function setActiveTabUI() {
+
+  document
+    .querySelectorAll('.tab-btn')
+    .forEach(btn => {
+
+      btn.classList.remove(
+        'active'
+      );
+
+      if (
+        btn.dataset.tab ===
+        activeTab
+      ) {
+
+        btn.classList.add(
+          'active'
+        );
+
+      }
+
+    });
+
+}
+
+function switchTab(tabId) {
+
+  activeTab = tabId;
+
+  setActiveTabUI();
+
+  renderContent();
+
+}
+
+function initializeQuickActions() {
+
+  const cards =
+    document.querySelectorAll(
+      '.quick-action-card'
+    );
+
+  cards.forEach(card => {
+
+    card.addEventListener(
+      'click',
+      () => {
+
+        switchTab(
+          card.dataset.tabTarget
+        );
+
+      }
+    );
+
+  });
+
+}
+
 function initializeTabs() {
 
   const tabButtons =
@@ -84,26 +161,9 @@ function initializeTabs() {
       'click',
       () => {
 
-        activeTab =
-          button.dataset.tab;
-
-        document
-          .querySelectorAll(
-            '.tab-btn'
-          )
-          .forEach(btn => {
-
-            btn.classList.remove(
-              'active'
-            );
-
-          });
-
-        button.classList.add(
-          'active'
+        switchTab(
+          button.dataset.tab
         );
-
-        renderContent();
 
       }
     );
