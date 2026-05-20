@@ -1,1 +1,81 @@
-/* LAYOUT CSS */
+body {
+
+  margin: 0;
+
+  background: var(--bg-color);
+
+  color: var(--primary-text);
+
+  font-family:
+    Inter,
+    Arial,
+    sans-serif;
+
+}
+
+#app {
+
+  min-height: 100vh;
+
+}
+
+.app-shell {
+
+  width: 100%;
+  max-width: var(--max-width);
+
+  margin: 0 auto;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+}
+
+.app-content {
+
+  margin-top: 24px;
+
+}
+
+.cards-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(240px, 1fr)
+    );
+
+  gap: 20px;
+
+  margin-bottom: 24px;
+
+}
+
+.content-section {
+
+  background: var(--card-bg);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+
+  border: 1px solid var(--border-color);
+
+  padding: 24px;
+
+  min-height: 400px;
+
+}
+
+.sticky-filters {
+
+  position: sticky;
+
+  top: 16px;
+
+  z-index: 50;
+
+}
