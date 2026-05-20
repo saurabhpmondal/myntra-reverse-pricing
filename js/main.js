@@ -11,13 +11,186 @@ import {
 } from './components/tabs.js';
 
 import {
-  renderFilters,
-  initializeFilters
+  renderFilters
 } from './components/filters.js';
 
 import {
   renderSummaryCards
 } from './reports/summaryCards.js';
+
+import {
+  renderReversePricingReport
+} from './reports/reversePricingReport.js';
+
+let activeTab = 'dashboard';
+
+let filters = {
+  brand: '',
+  articleType: '',
+  status: '',
+  search: ''
+};
+
+function renderContent() {
+
+  const content =
+    document.getElementById(
+      'contentArea'
+    );
+
+  if (!content) {
+    return;
+  }
+
+  if (
+    activeTab ===
+    'reverse-pricing'
+  ) {
+
+    content.innerHTML =
+      renderReversePricingReport(
+        filters
+      );
+
+    return;
+  }
+
+  content.innerHTML = `
+
+    <div class="placeholder-content">
+
+      ${activeTab
+        .replaceAll('-', ' ')
+        .toUpperCase()}
+
+    </div>
+
+  `;
+}
+
+function initializeTabs() {
+
+  const tabButtons =
+    document.querySelectorAll(
+      '.tab-btn'
+    );
+
+  tabButtons.forEach(button => {
+
+    button.addEventListener(
+      'click',
+      () => {
+
+        activeTab =
+          button.dataset.tab;
+
+        document
+          .querySelectorAll(
+            '.tab-btn'
+          )
+          .forEach(btn => {
+
+            btn.classList.remove(
+              'active'
+            );
+
+          });
+
+        button.classList.add(
+          'active'
+        );
+
+        renderContent();
+
+      }
+    );
+
+  });
+
+}
+
+function initializeFilters() {
+
+  const brandFilter =
+    document.getElementById(
+      'brandFilter'
+    );
+
+  const articleFilter =
+    document.getElementById(
+      'articleFilter'
+    );
+
+  const statusFilter =
+    document.getElementById(
+      'statusFilter'
+    );
+
+  const searchInput =
+    document.getElementById(
+      'globalSearch'
+    );
+
+  let debounceTimer = null;
+
+  brandFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.brand =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  articleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.articleType =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  statusFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.status =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  searchInput.addEventListener(
+    'input',
+    event => {
+
+      clearTimeout(
+        debounceTimer
+      );
+
+      debounceTimer =
+        setTimeout(() => {
+
+          filters.search =
+            event.target.value;
+
+          renderContent();
+
+        }, 300);
+
+    }
+  );
+
+}
 
 async function bootstrapUI() {
 
@@ -38,15 +211,12 @@ async function bootstrapUI() {
 
         ${renderSummaryCards()}
 
-        ${renderTabs()}
+        ${renderTabs(activeTab)}
 
-        <div class="content-section">
-
-          <div class="placeholder-content">
-
-            Reverse Pricing Engine Ready
-
-          </div>
+        <div
+          class="content-section"
+          id="contentArea"
+        >
 
         </div>
 
@@ -56,7 +226,11 @@ async function bootstrapUI() {
 
   `;
 
+  initializeTabs();
+
   initializeFilters();
+
+  renderContent();
 
 }
 
