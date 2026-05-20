@@ -11,13 +11,8 @@ export const tabsConfig = [
   },
 
   {
-    id: 'tp-sp',
-    label: 'TP → SP Calculator'
-  },
-
-  {
-    id: 'sp-tp',
-    label: 'SP → TP Calculator'
+    id: 'pricing-calculator',
+    label: 'Pricing Calculator'
   },
 
   {
