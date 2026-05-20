@@ -1,58 +1,132 @@
-export const tabsConfig = [
-
-  {
-    id: 'dashboard',
-    label: 'Dashboard'
-  },
-
-  {
-    id: 'reverse-pricing',
-    label: 'Reverse Pricing'
-  },
-
-  {
-    id: 'pricing-calculator',
-    label: 'Pricing Calculator'
-  },
-
-  {
-    id: 'best-brand',
-    label: 'Best Brand'
-  },
-
-  {
-    id: 'export-center',
-    label: 'Export Center'
-  }
-
-];
-
 export function renderTabs(
-  activeTab = 'dashboard'
+  activeTab
 ) {
 
   return `
 
-    <div class="tabs-bar">
+    <div class="tabs-wrapper">
 
-      ${tabsConfig.map(tab => `
-
-        <button
-          class="tab-btn ${
-            activeTab === tab.id
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'dashboard'
               ? 'active'
               : ''
-          }"
-          data-tab="${tab.id}"
-        >
+          }
+        "
+        data-tab="dashboard"
+      >
 
-          ${tab.label}
+        Dashboard
 
-        </button>
+      </button>
 
-      `).join('')}
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'reverse-pricing'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="reverse-pricing"
+      >
+
+        Reverse Pricing
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'pricing-calculator'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="pricing-calculator"
+      >
+
+        Pricing Calculator
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'best-brand'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="best-brand"
+      >
+
+        Best Brand
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'bulk-pricing'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="bulk-pricing"
+      >
+
+        Bulk Pricing
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'rebates'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="rebates"
+      >
+
+        Rebates
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'export-center'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="export-center"
+      >
+
+        Export Center
+
+      </button>
 
     </div>
 
   `;
+
 }
