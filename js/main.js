@@ -11,11 +11,6 @@ import {
 } from './reports/reversePricingReport.js';
 
 import {
-  renderPricingCalculator,
-  initializePricingCalculator
-} from './reports/pricingCalculatorReport.js';
-
-import {
   renderBestBrandReport,
   initializeBestBrandReport
 } from './reports/bestBrandReport.js';
@@ -84,15 +79,6 @@ function renderActiveReport() {
     return renderReversePricingReport(
       filters
     );
-
-  }
-
-  if (
-    activeTab ===
-    'pricing-calculator'
-  ) {
-
-    return renderPricingCalculator();
 
   }
 
@@ -178,15 +164,6 @@ export function renderApp() {
   INITIALIZE REPORTS
   -----------------------------------
   */
-
-  if (
-    activeTab ===
-    'pricing-calculator'
-  ) {
-
-    initializePricingCalculator();
-
-  }
 
   if (
     activeTab ===
