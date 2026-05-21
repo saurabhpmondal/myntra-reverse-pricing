@@ -467,6 +467,9 @@ export function renderRebateReport() {
 
       <div
         style="
+          display:flex;
+          justify-content:center;
+          align-items:center;
           margin-top:24px;
         "
       >
@@ -475,6 +478,10 @@ export function renderRebateReport() {
           class="tab-btn active"
           id="checkRebateBtn"
           disabled
+          style="
+            min-width:180px;
+            height:44px;
+          "
         >
 
           Check Rebate
