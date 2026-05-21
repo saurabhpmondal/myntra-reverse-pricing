@@ -14,36 +14,13 @@ import {
   calculateCODB
 } from './codbCalculator.js';
 
-function safeNumber(value) {
-
-  const number =
-    Number(value);
-
-  if (
-    Number.isNaN(number) ||
-    !Number.isFinite(number)
-  ) {
-
-    return 0;
-
-  }
-
-  return number;
-}
-
 function round2(value) {
 
   return Number(
-    safeNumber(value)
+    Number(value || 0)
       .toFixed(2)
   );
-}
 
-function ceil(value) {
-
-  return Math.ceil(
-    safeNumber(value)
-  );
 }
 
 export function calculateSettlement({
@@ -55,13 +32,13 @@ export function calculateSettlement({
 }) {
 
   const SP =
-    safeNumber(sellingPrice);
+    Number(sellingPrice);
 
   const TP =
-    safeNumber(tp);
+    Number(tp);
 
   const MRP =
-    safeNumber(mrp);
+    Number(mrp);
 
   /*
   -----------------------------------
@@ -71,14 +48,13 @@ export function calculateSettlement({
 
   const gtaData =
     calculateGTA({
+
       brand,
       articleType,
-      sellingPrice: SP
-    });
 
-  if (!gtaData) {
-    return null;
-  }
+      sellingPrice: SP
+
+    });
 
   const gtaCharge =
     round2(
@@ -104,26 +80,27 @@ export function calculateSettlement({
 
   const commercialData =
     calculateCommercials({
+
       brand,
       articleType,
+
       sellerPrice
+
     });
 
-  if (!commercialData) {
-    return null;
-  }
-
   const commissionPercent =
-    safeNumber(
-      commercialData.commissionPercent
-    );
+    commercialData
+      .commissionPercent;
 
   const commissionRs =
     round2(
+
       sellerPrice *
+
       (
         commissionPercent / 100
       )
+
     );
 
   const fixedFee =
@@ -134,18 +111,23 @@ export function calculateSettlement({
   /*
   -----------------------------------
   GST ON COM + FIXED FEE
+  NO ROUNDUP
   -----------------------------------
   */
 
   const gstOnComAndFee =
-    ceil(
+    round2(
+
       (
         commissionRs +
         fixedFee
       ) *
+
       (
-        BUSINESS_RULES.GST_PERCENT / 100
+        BUSINESS_RULES
+          .GST_PERCENT / 100
       )
+
     );
 
   /*
@@ -156,10 +138,12 @@ export function calculateSettlement({
 
   const uploadSettlement =
     round2(
+
       sellerPrice -
       commissionRs -
       fixedFee -
       gstOnComAndFee
+
     );
 
   /*
@@ -170,18 +154,26 @@ export function calculateSettlement({
 
   const tds =
     round2(
+
       sellerPrice *
+
       (
-        BUSINESS_RULES.TDS_PERCENT / 100
+        BUSINESS_RULES
+          .TDS_PERCENT / 100
       )
+
     );
 
   const tcs =
     round2(
+
       sellerPrice *
+
       (
-        BUSINESS_RULES.TCS_PERCENT / 100
+        BUSINESS_RULES
+          .TCS_PERCENT / 100
       )
+
     );
 
   const totalTaxDeduction =
@@ -197,8 +189,10 @@ export function calculateSettlement({
 
   const bankSettlement =
     round2(
+
       uploadSettlement -
       totalTaxDeduction
+
     );
 
   /*
@@ -208,40 +202,82 @@ export function calculateSettlement({
   */
 
   const royaltyPercent =
-    safeNumber(
-      commercialData.royaltyPercent
-    );
+    commercialData
+      .royaltyPercent;
 
   const marketingPercent =
-    safeNumber(
-      commercialData.marketingPercent
-    );
+    commercialData
+      .marketingPercent;
 
-  const royalty =
+  const royaltyBase =
     round2(
+
       SP *
+
       (
         royaltyPercent / 100
       )
+
+    );
+
+  const marketingBase =
+    round2(
+
+      SP *
+
+      (
+        marketingPercent / 100
+      )
+
+    );
+
+  const royaltyGST =
+    round2(
+
+      royaltyBase *
+
+      (
+        BUSINESS_RULES
+          .GST_PERCENT / 100
+      )
+
+    );
+
+  const marketingGST =
+    round2(
+
+      marketingBase *
+
+      (
+        BUSINESS_RULES
+          .GST_PERCENT / 100
+      )
+
+    );
+
+  /*
+  -----------------------------------
+  FINAL ROYALTY
+  GST INCLUDED
+  -----------------------------------
+  */
+
+  const royalty =
+    round2(
+      royaltyBase +
+      royaltyGST
     );
 
   const marketing =
     round2(
-      SP *
-      (
-        marketingPercent / 100
-      )
+      marketingBase +
+      marketingGST
     );
 
   const gstOnRoyaltyMarketing =
     round2(
-      (
-        royalty +
-        marketing
-      ) *
-      (
-        BUSINESS_RULES.GST_PERCENT / 100
-      )
+      royaltyGST +
+      marketingGST
     );
 
   /*
@@ -252,10 +288,11 @@ export function calculateSettlement({
 
   const payoutBeforeCODB =
     round2(
+
       bankSettlement -
       royalty -
-      marketing -
-      gstOnRoyaltyMarketing
+      marketing
+
     );
 
   /*
@@ -266,8 +303,10 @@ export function calculateSettlement({
 
   const dispatchCost =
     SP < 1000
-      ? BUSINESS_RULES.DISPATCH_BELOW_1000
-      : BUSINESS_RULES.DISPATCH_ABOVE_1000;
+      ? BUSINESS_RULES
+          .DISPATCH_BELOW_1000
+      : BUSINESS_RULES
+          .DISPATCH_ABOVE_1000;
 
   /*
   -----------------------------------
@@ -277,16 +316,14 @@ export function calculateSettlement({
 
   const codbData =
     calculateCODB({
-      fixedFee,
-      returnFee:
-        safeNumber(
-          commercialData.returnFee
-        )
-    });
 
-  if (!codbData) {
-    return null;
-  }
+      fixedFee,
+
+      returnFee:
+        commercialData
+          .returnFee
+
+    });
 
   /*
   -----------------------------------
@@ -296,11 +333,11 @@ export function calculateSettlement({
 
   const payoutAfterCODB =
     round2(
+
       payoutBeforeCODB -
       dispatchCost -
-      safeNumber(
-        codbData.rtvCodb
-      )
+      codbData.rtvCodb
+
     );
 
   /*
@@ -316,11 +353,15 @@ export function calculateSettlement({
 
   const tpProfitPercent =
     TP > 0
+
       ? round2(
+
           (
             tpProfitRs / TP
           ) * 100
+
         )
+
       : 0;
 
   /*
@@ -331,16 +372,24 @@ export function calculateSettlement({
 
   const tradeDiscount =
     MRP > 0
+
       ? round2(
+
           (
             (
               MRP - SP
-            ) / MRP
-          ) * 100
+            ) * 100
+          ) / MRP
+
         )
+
       : 0;
 
   return {
+
+    /*
+    INPUTS
+    */
 
     brand,
     articleType,
@@ -350,55 +399,111 @@ export function calculateSettlement({
 
     sellingPrice: SP,
 
+    /*
+    GTA
+    */
+
     gtaCharge,
 
+    /*
+    SELLER PRICE
+    */
+
     sellerPrice,
+
+    /*
+    COMMERCIALS
+    */
 
     commissionPercent,
     commissionRs,
 
     fixedFee,
 
+    /*
+    GST
+    */
+
     gstOnComAndFee,
 
+    /*
+    UPLOAD
+    */
+
     uploadSettlement,
+
+    /*
+    TAXES
+    */
 
     tds,
     tcs,
 
     totalTaxDeduction,
 
+    /*
+    BANK
+    */
+
     bankSettlement,
 
+    /*
+    ROYALTY
+    */
+
     royaltyPercent,
+    royaltyBase,
+    royaltyGST,
     royalty,
 
     marketingPercent,
+    marketingBase,
+    marketingGST,
     marketing,
 
     gstOnRoyaltyMarketing,
 
+    /*
+    PAYOUT
+    */
+
     payoutBeforeCODB,
+
+    /*
+    DISPATCH
+    */
 
     dispatchCost,
 
+    /*
+    CODB
+    */
+
     baseReturnCost:
       round2(
-        codbData.baseReturnCost
+        codbData
+          .baseReturnCost
       ),
 
     returnCost:
       round2(
-        codbData.returnCost
+        codbData
+          .returnCost
       ),
 
     rtvPercent:
-      codbData.rtvPercent,
+      codbData
+        .rtvPercent,
 
     rtvCodb:
       round2(
-        codbData.rtvCodb
+        codbData
+          .rtvCodb
       ),
+
+    /*
+    FINAL
+    */
 
     payoutAfterCODB,
 
@@ -407,5 +512,7 @@ export function calculateSettlement({
     tpProfitPercent,
 
     tradeDiscount
+
   };
+
 }
