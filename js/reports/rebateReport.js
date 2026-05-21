@@ -24,6 +24,172 @@ function formatNumber(value) {
 
 }
 
+/* -----------------------------------
+DOWNLOAD SAMPLE FILE
+----------------------------------- */
+
+function downloadSampleFile() {
+
+  const csv = `style_id,target_isp,target_discount,rebate_percent
+38992879,1602,71,2.5`;
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type: 'text/csv'
+      }
+    );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const a =
+    document.createElement(
+      'a'
+    );
+
+  a.href = url;
+
+  a.download =
+    'rebate_sample_file.csv';
+
+  a.click();
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}
+
+/* -----------------------------------
+EXPORT CSV
+----------------------------------- */
+
+function exportToCSV() {
+
+  if (
+    !processedRows.length
+  ) {
+    return;
+  }
+
+  const headers = [
+
+    'Style ID',
+    'Brand',
+    'MRP',
+    'TD %',
+    'Rebate %',
+    'Target ISP',
+    'GTA',
+    'List Price',
+    'Com %',
+    'Com Rs',
+    'Fixed Fee',
+    'Tax on Com+Fee',
+    'Upload Settlement',
+    'TDS+TCS',
+    'Bank Settlement',
+    'Royalty',
+    'Marketing',
+    'Rebate Amount',
+    'PB-CODB',
+    'Dispatch',
+    'Return Charge',
+    'Return Cost',
+    'Return CODB',
+    'Payout After CODB',
+    'TP',
+    'TP Profit %',
+    'Rebate Action'
+
+  ];
+
+  const rows =
+    processedRows.map(
+      row => [
+
+        row.styleId,
+        row.brand,
+        row.mrp,
+        row.td,
+        row.rebatePercent,
+        row.targetISP,
+        row.gta,
+        row.listPrice,
+        row.comPercent,
+        row.comRs,
+        row.fixedFee,
+        row.taxOnComFee,
+        row.uploadSettlement,
+        row.tdsTcs,
+        row.bankSettlement,
+        row.royalty,
+        row.marketing,
+        row.rebateAmount,
+        row.payoutBeforeCODB,
+        row.dispatchCost,
+        row.returnCharge,
+        row.returnCost,
+        row.returnCODB,
+        row.payoutAfterCODB,
+        row.tp,
+        row.tpProfitPercent,
+        row.rebateAction
+
+      ]
+    );
+
+  const csvContent = [
+
+    headers.join(','),
+
+    ...rows.map(
+      row =>
+        row.join(',')
+    )
+
+  ].join('\n');
+
+  const blob =
+    new Blob(
+      [csvContent],
+      {
+        type:
+          'text/csv;charset=utf-8;'
+      }
+    );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      'a'
+    );
+
+  link.href = url;
+
+  link.download =
+    'rebate_decision_output.csv';
+
+  link.click();
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}
+
+/* -----------------------------------
+KPI CARDS
+----------------------------------- */
+
 function renderKPICards({
   total,
   optIn,
@@ -104,6 +270,10 @@ function renderKPICards({
 
 }
 
+/* -----------------------------------
+ACTION CLASS
+----------------------------------- */
+
 function getActionClass(
   action
 ) {
@@ -123,6 +293,10 @@ function getActionClass(
   return 'status-bad';
 
 }
+
+/* -----------------------------------
+RESULT TABLE
+----------------------------------- */
 
 function renderResultTable(
   rows
@@ -176,157 +350,32 @@ function renderResultTable(
 
             <tr>
 
-              <td>
-                ${row.styleId || '-'}
-              </td>
-
-              <td>
-                ${row.brand || '-'}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.mrp
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.td
-                )}%
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.rebatePercent
-                )}%
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.targetISP
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.gta
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.listPrice
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.comPercent
-                )}%
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.comRs
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.fixedFee
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.taxOnComFee
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.uploadSettlement
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.tdsTcs
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.bankSettlement
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.royalty
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.marketing
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.rebateAmount
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.payoutBeforeCODB
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.dispatchCost
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.returnCharge
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.returnCost
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.returnCODB
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.payoutAfterCODB
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.tp
-                )}
-              </td>
-
-              <td>
-                ${formatNumber(
-                  row.tpProfitPercent
-                )}%
-              </td>
+              <td>${row.styleId || '-'}</td>
+              <td>${row.brand || '-'}</td>
+              <td>${formatNumber(row.mrp)}</td>
+              <td>${formatNumber(row.td)}%</td>
+              <td>${formatNumber(row.rebatePercent)}%</td>
+              <td>${formatNumber(row.targetISP)}</td>
+              <td>${formatNumber(row.gta)}</td>
+              <td>${formatNumber(row.listPrice)}</td>
+              <td>${formatNumber(row.comPercent)}%</td>
+              <td>${formatNumber(row.comRs)}</td>
+              <td>${formatNumber(row.fixedFee)}</td>
+              <td>${formatNumber(row.taxOnComFee)}</td>
+              <td>${formatNumber(row.uploadSettlement)}</td>
+              <td>${formatNumber(row.tdsTcs)}</td>
+              <td>${formatNumber(row.bankSettlement)}</td>
+              <td>${formatNumber(row.royalty)}</td>
+              <td>${formatNumber(row.marketing)}</td>
+              <td>${formatNumber(row.rebateAmount)}</td>
+              <td>${formatNumber(row.payoutBeforeCODB)}</td>
+              <td>${formatNumber(row.dispatchCost)}</td>
+              <td>${formatNumber(row.returnCharge)}</td>
+              <td>${formatNumber(row.returnCost)}</td>
+              <td>${formatNumber(row.returnCODB)}</td>
+              <td>${formatNumber(row.payoutAfterCODB)}</td>
+              <td>${formatNumber(row.tp)}</td>
+              <td>${formatNumber(row.tpProfitPercent)}%</td>
 
               <td>
 
@@ -356,6 +405,10 @@ function renderResultTable(
 
 }
 
+/* -----------------------------------
+RENDER
+----------------------------------- */
+
 export function renderRebateReport() {
 
   return `
@@ -372,24 +425,34 @@ export function renderRebateReport() {
 
         <div class="bulk-upload-title">
 
-          Rebate Engine
+          Download sample file and upload CSV
 
         </div>
 
         <div class="bulk-upload-subtitle">
 
-          Upload rebate planning file
+          Upload rebate planning CSV file
 
         </div>
 
         <input
           type="file"
           id="rebateFile"
-          accept=".csv,.xlsx"
+          accept=".csv"
+          class="bulk-upload-input"
+        >
+
+        <button
+          class="secondary-btn"
+          id="downloadRebateSample"
           style="
             margin-top:20px;
           "
         >
+
+          Download Sample File
+
+        </button>
 
       </div>
 
@@ -435,6 +498,10 @@ export function renderRebateReport() {
 
 }
 
+/* -----------------------------------
+INITIALIZE
+----------------------------------- */
+
 export function initializeRebateReport() {
 
   const fileInput =
@@ -456,6 +523,16 @@ export function initializeRebateReport() {
     document.getElementById(
       'rebateResultArea'
     );
+
+  const sampleBtn =
+    document.getElementById(
+      'downloadRebateSample'
+    );
+
+  sampleBtn.addEventListener(
+    'click',
+    downloadSampleFile
+  );
 
   fileInput.addEventListener(
     'change',
@@ -571,15 +648,13 @@ export function initializeRebateReport() {
             const product =
               appCache.productMaster.find(
                 row =>
-                  row.style_id ===
-                  item.styleId
+                  String(
+                    row.style_id
+                  ) ===
+                  String(
+                    item.styleId
+                  )
               );
-
-            /*
-            -----------------------------------
-            NOT FOUND
-            -----------------------------------
-            */
 
             if (!product) {
 
@@ -605,12 +680,6 @@ export function initializeRebateReport() {
 
             try {
 
-              /*
-              -----------------------------------
-              SETTLEMENT
-              -----------------------------------
-              */
-
               const settlement =
                 calculateSettlement({
 
@@ -635,12 +704,6 @@ export function initializeRebateReport() {
 
                 });
 
-              /*
-              -----------------------------------
-              REBATE
-              -----------------------------------
-              */
-
               const rebateAmount =
                 (
                   item.targetISP *
@@ -649,23 +712,11 @@ export function initializeRebateReport() {
 
                 ) / 100;
 
-              /*
-              -----------------------------------
-              ADJUSTED PAYOUT
-              -----------------------------------
-              */
-
               const adjustedPayout =
                 settlement
                   .payoutAfterCODB +
 
                 rebateAmount;
-
-              /*
-              -----------------------------------
-              TP %
-              -----------------------------------
-              */
 
               const tpProfitPercent =
                 (
@@ -684,12 +735,6 @@ export function initializeRebateReport() {
 
                 ) * 100;
 
-              /*
-              -----------------------------------
-              CONTINUE LOGIC
-              -----------------------------------
-              */
-
               const allowedLoss =
                 product.status ===
                 'CONTINUE'
@@ -703,12 +748,6 @@ export function initializeRebateReport() {
 
                   ? 'OPT-IN'
                   : 'OPT-OUT';
-
-              /*
-              -----------------------------------
-              PUSH
-              -----------------------------------
-              */
 
               processedRows.push({
 
@@ -886,7 +925,7 @@ export function initializeRebateReport() {
               id="exportRebateFile"
             >
 
-              Export XLSX
+              Export CSV
 
             </button>
 
@@ -905,6 +944,15 @@ export function initializeRebateReport() {
           </div>
 
         `;
+
+        document
+          .getElementById(
+            'exportRebateFile'
+          )
+          .addEventListener(
+            'click',
+            exportToCSV
+          );
 
       }, 300);
 
