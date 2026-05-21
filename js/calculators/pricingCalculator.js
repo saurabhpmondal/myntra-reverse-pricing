@@ -33,9 +33,11 @@ function formatNumber(value) {
   ).toLocaleString(
     'en-IN',
     {
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
     }
   );
+
 }
 
 function getProfitClass(value) {
@@ -189,7 +191,8 @@ function renderResultCards({
   sp,
   payout,
   tpProfitRs,
-  tpProfitPercent
+  tpProfitPercent,
+  td
 }) {
 
   return `
@@ -260,9 +263,24 @@ function renderResultCards({
 
       </div>
 
+      <div class="summary-card">
+
+        <div class="summary-title">
+          TD %
+        </div>
+
+        <div class="summary-value">
+
+          ${formatNumber(td)}%
+
+        </div>
+
+      </div>
+
     </div>
 
   `;
+
 }
 
 function renderSettlementTable(
@@ -282,6 +300,13 @@ function renderSettlementTable(
             <td>${formatNumber(
               s.sellingPrice
             )}</td>
+          </tr>
+
+          <tr>
+            <td>TD %</td>
+            <td>${formatNumber(
+              s.tradeDiscount
+            )}%</td>
           </tr>
 
           <tr>
@@ -334,14 +359,22 @@ function renderSettlementTable(
           </tr>
 
           <tr>
-            <td>Royalty</td>
+            <td>
+              Royalty
+              (Incl GST)
+            </td>
+
             <td>${formatNumber(
               s.royalty
             )}</td>
           </tr>
 
           <tr>
-            <td>Marketing</td>
+            <td>
+              Marketing
+              (Incl GST)
+            </td>
+
             <td>${formatNumber(
               s.marketing
             )}</td>
@@ -475,6 +508,16 @@ export function initializePricingCalculator() {
           'tp-sp'
         ) {
 
+          const sampleProduct =
+            appCache.productMaster.find(
+              row =>
+
+                row.brand === brand &&
+
+                row.article_type ===
+                articleType
+            );
+
           const solved =
             solveSellingPrice({
 
@@ -504,8 +547,23 @@ export function initializePricingCalculator() {
 
           }
 
-          const s =
-            solved.settlement;
+          const settlement =
+            calculateSettlement({
+
+              brand,
+              articleType,
+
+              sellingPrice:
+                solved.sellingPrice,
+
+              tp: value,
+
+              mrp:
+                Number(
+                  sampleProduct?.mrp || 0
+                )
+
+            });
 
           result.innerHTML = `
 
@@ -515,18 +573,21 @@ export function initializePricingCalculator() {
                 solved.sellingPrice,
 
               payout:
-                s.payoutAfterCODB,
+                settlement.payoutAfterCODB,
 
               tpProfitRs:
-                s.tpProfitRs,
+                settlement.tpProfitRs,
 
               tpProfitPercent:
-                s.tpProfitPercent
+                settlement.tpProfitPercent,
+
+              td:
+                settlement.tradeDiscount
 
             })}
 
             ${renderSettlementTable(
-              s
+              settlement
             )}
 
           `;
@@ -541,6 +602,16 @@ export function initializePricingCalculator() {
         -----------------------------------
         */
 
+        const sampleProduct =
+          appCache.productMaster.find(
+            row =>
+
+              row.brand === brand &&
+
+              row.article_type ===
+              articleType
+          );
+
         const settlement =
           calculateSettlement({
 
@@ -550,7 +621,12 @@ export function initializePricingCalculator() {
             sellingPrice:
               value,
 
-            tp: 0
+            tp: 0,
+
+            mrp:
+              Number(
+                sampleProduct?.mrp || 0
+              )
 
           });
 
@@ -568,7 +644,10 @@ export function initializePricingCalculator() {
               settlement.tpProfitRs,
 
             tpProfitPercent:
-              settlement.tpProfitPercent
+              settlement.tpProfitPercent,
+
+            td:
+              settlement.tradeDiscount
 
           })}
 
