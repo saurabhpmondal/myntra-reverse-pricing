@@ -47,6 +47,32 @@ function getProfitClass(value) {
 }
 
 /* -----------------------------------
+TD %
+----------------------------------- */
+
+function calculateTD(
+  mrp,
+  sp
+) {
+
+  if (
+    !mrp ||
+    !sp
+  ) {
+    return 0;
+  }
+
+  return (
+    (
+      (
+        mrp - sp
+      ) * 100
+    ) / mrp
+  );
+
+}
+
+/* -----------------------------------
 FILTER PRODUCTS
 ----------------------------------- */
 
@@ -177,12 +203,15 @@ BUILD ROWS
 
 function buildRows(
   products,
-  filters
+  filters,
+  isExportMode = false
 ) {
 
   const rows = [];
 
-  currentExportRows = [];
+  if (isExportMode) {
+    currentExportRows = [];
+  }
 
   products.forEach(product => {
 
@@ -230,97 +259,133 @@ function buildRows(
 
       /*
       -----------------------------------
+      TD %
+      -----------------------------------
+      */
+
+      const tdPercent =
+        calculateTD(
+
+          Number(
+            product.mrp
+          ),
+
+          Number(
+            matchedRule.derivedSP
+          )
+
+        );
+
+      /*
+      -----------------------------------
+      ROUND UP UPLOAD SETTLEMENT
+      -----------------------------------
+      */
+
+      const roundedUploadSettlement =
+        Math.ceil(
+          Number(
+            s.uploadSettlement || 0
+          )
+        );
+
+      /*
+      -----------------------------------
       EXPORT DATA
       -----------------------------------
       */
 
-      currentExportRows.push({
+      if (isExportMode) {
 
-        'Style ID':
-          product.style_id,
+        currentExportRows.push({
 
-        'ERP SKU':
-          product.erp_sku,
+          'Style ID':
+            product.style_id,
 
-        Brand:
-          product.brand,
+          'ERP SKU':
+            product.erp_sku,
 
-        'Article Type':
-          product.article_type,
+          Brand:
+            product.brand,
 
-        Status:
-          product.status,
+          'Article Type':
+            product.article_type,
 
-        TP:
-          Number(product.tp),
+          Status:
+            product.status,
 
-        Rule:
-          matchedRule.pricingRule,
+          TP:
+            Number(product.tp),
 
-        SP:
-          matchedRule.derivedSP,
+          Rule:
+            matchedRule.pricingRule,
 
-        MRP:
-          Number(product.mrp),
+          SP:
+            matchedRule.derivedSP,
 
-        'TD %':
-          s.tradeDiscount,
+          MRP:
+            Number(product.mrp),
 
-        GTA:
-          s.gtaCharge,
+          'TD %':
+            tdPercent,
 
-        'Seller Price':
-          s.sellerPrice,
+          GTA:
+            s.gtaCharge,
 
-        'Commission %':
-          s.commissionPercent,
+          'Seller Price':
+            s.sellerPrice,
 
-        'Commission Rs':
-          s.commissionRs,
+          'Commission %':
+            s.commissionPercent,
 
-        'Fixed Fee':
-          s.fixedFee,
+          'Commission Rs':
+            s.commissionRs,
 
-        GST:
-          s.gstOnComAndFee,
+          'Fixed Fee':
+            s.fixedFee,
 
-        'Upload Settlement':
-          s.uploadSettlement,
+          GST:
+            s.gstOnComAndFee,
 
-        'TDS + TCS':
-          s.totalTaxDeduction,
+          'Upload Settlement':
+            roundedUploadSettlement,
 
-        'Bank Settlement':
-          s.bankSettlement,
+          'TDS + TCS':
+            s.totalTaxDeduction,
 
-        Royalty:
-          s.royalty,
+          'Bank Settlement':
+            s.bankSettlement,
 
-        Marketing:
-          s.marketing,
+          Royalty:
+            s.royalty,
 
-        'Payout Before CODB':
-          s.payoutBeforeCODB,
+          Marketing:
+            s.marketing,
 
-        Dispatch:
-          s.dispatchCost,
+          'Payout Before CODB':
+            s.payoutBeforeCODB,
 
-        'Return Cost':
-          s.returnCost,
+          Dispatch:
+            s.dispatchCost,
 
-        'RTV CODB':
-          s.rtvCodb,
+          'Return Cost':
+            s.returnCost,
 
-        'Final Payout':
-          s.payoutAfterCODB,
+          'RTV CODB':
+            s.rtvCodb,
 
-        'TP Profit Rs':
-          s.tpProfitRs,
+          'Final Payout':
+            s.payoutAfterCODB,
 
-        'TP Profit %':
-          s.tpProfitPercent
+          'TP Profit Rs':
+            s.tpProfitRs,
 
-      });
+          'TP Profit %':
+            s.tpProfitPercent
+
+        });
+
+      }
 
       /*
       -----------------------------------
@@ -353,7 +418,7 @@ function buildRows(
           <td>${formatNumber(product.mrp)}</td>
 
           <td>${formatNumber(
-            s.tradeDiscount
+            tdPercent
           )}%</td>
 
           <td>${formatNumber(
@@ -381,7 +446,7 @@ function buildRows(
           )}</td>
 
           <td>${formatNumber(
-            s.uploadSettlement
+            roundedUploadSettlement
           )}</td>
 
           <td>${formatNumber(
@@ -464,12 +529,39 @@ export function renderReversePricingReport(
   filters
 ) {
 
-  const filteredProducts =
-    filterProducts(filters)
+  /*
+  -----------------------------------
+  FULL DATASET FOR EXPORT
+  -----------------------------------
+  */
+
+  const fullFilteredProducts =
+    filterProducts(filters);
+
+  /*
+  -----------------------------------
+  EXPORT DATA
+  -----------------------------------
+  */
+
+  buildRows(
+    fullFilteredProducts,
+    filters,
+    true
+  );
+
+  /*
+  -----------------------------------
+  UI LIMITED TO 100
+  -----------------------------------
+  */
+
+  const visibleProducts =
+    fullFilteredProducts
       .slice(0, 100);
 
   if (
-    !filteredProducts.length
+    !visibleProducts.length
   ) {
 
     return `
@@ -484,15 +576,22 @@ export function renderReversePricingReport(
 
   }
 
+  /*
+  -----------------------------------
+  TABLE DATA
+  -----------------------------------
+  */
+
   const tableRows =
     buildRows(
-      filteredProducts,
-      filters
+      visibleProducts,
+      filters,
+      false
     );
 
   /*
   -----------------------------------
-  DELAY EXPORT BINDING
+  EXPORT BUTTON EVENT
   -----------------------------------
   */
 
