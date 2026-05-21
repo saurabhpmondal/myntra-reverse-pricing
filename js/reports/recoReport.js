@@ -476,3 +476,538 @@ export function renderRecoReport() {
   `;
 
 }
+
+/* -----------------------------------
+INITIALIZE
+----------------------------------- */
+
+export function initializeRecoReport() {
+
+  const fileInput =
+    document.getElementById(
+      'recoFile'
+    );
+
+  const validationArea =
+    document.getElementById(
+      'recoValidationArea'
+    );
+
+  const checkBtn =
+    document.getElementById(
+      'checkRecoBtn'
+    );
+
+  const resultArea =
+    document.getElementById(
+      'recoResultArea'
+    );
+
+  const sampleBtn =
+    document.getElementById(
+      'downloadRecoSample'
+    );
+
+  sampleBtn.addEventListener(
+    'click',
+    downloadSampleFile
+  );
+
+  fileInput.addEventListener(
+    'change',
+    async event => {
+
+      const file =
+        event.target.files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      const text =
+        await file.text();
+
+      const rows =
+        text
+          .split('\n')
+          .slice(1)
+          .map(row => {
+
+            const cols =
+              row.split(',');
+
+            return {
+
+              styleId:
+                cols[0]?.trim(),
+
+              recommendedPrice:
+                Number(cols[1]),
+
+              settlementPrice:
+                Number(cols[2])
+
+            };
+
+          })
+          .filter(
+            row => row.styleId
+          );
+
+      uploadedRows = rows;
+
+      validationArea.innerHTML = `
+
+        <div class="bulk-verified-card">
+
+          <div class="bulk-verified-title">
+
+            ✓ FILE VERIFIED
+
+          </div>
+
+          <div class="bulk-verified-grid">
+
+            <div class="bulk-verified-item">
+
+              <div class="bulk-verified-value">
+                ${rows.length}
+              </div>
+
+              <div class="bulk-verified-label">
+                Styles Uploaded
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+      checkBtn.disabled =
+        false;
+
+    }
+  );
+
+  checkBtn.addEventListener(
+    'click',
+    () => {
+
+      processedRows = [];
+
+      resultArea.innerHTML = `
+
+        <div class="bulk-processing-loader">
+
+          <div class="bulk-processing-spinner">
+
+          </div>
+
+          <div>
+
+            Processing reco engine...
+
+          </div>
+
+        </div>
+
+      `;
+
+      setTimeout(() => {
+
+        uploadedRows.forEach(
+          item => {
+
+            const product =
+              appCache.productMaster.find(
+                row =>
+                  String(
+                    row.style_id
+                  ) ===
+                  String(
+                    item.styleId
+                  )
+              );
+
+            if (!product) {
+
+              processedRows.push({
+
+                styleId:
+                  item.styleId,
+
+                recommendedPrice:
+                  item.recommendedPrice,
+
+                uploadSettlement:
+                  item.settlementPrice,
+
+                recoStatus:
+                  'NOT FOUND'
+
+              });
+
+              return;
+
+            }
+
+            try {
+
+              /*
+              -----------------------------------
+              TDS + TCS
+              -----------------------------------
+              */
+
+              const tdsTcs =
+                (
+                  item.settlementPrice *
+                  0.6
+                ) / 100;
+
+              /*
+              -----------------------------------
+              BANK SETTLEMENT
+              -----------------------------------
+              */
+
+              const bankSettlement =
+                item.settlementPrice -
+                tdsTcs;
+
+              /*
+              -----------------------------------
+              ROYALTY
+              -----------------------------------
+              */
+
+              const royalty =
+                (
+                  item.recommendedPrice *
+
+                  Number(
+                    product.royalty_percent || 0
+                  )
+
+                ) / 100;
+
+              /*
+              -----------------------------------
+              MARKETING
+              -----------------------------------
+              */
+
+              const marketing =
+                (
+                  item.recommendedPrice *
+
+                  Number(
+                    product.marketing_percent || 0
+                  )
+
+                ) / 100;
+
+              /*
+              -----------------------------------
+              REBATE
+              -----------------------------------
+              */
+
+              const rebate =
+                0;
+
+              /*
+              -----------------------------------
+              PAYOUT BEFORE CODB
+              -----------------------------------
+              */
+
+              const payoutBeforeCODB =
+                bankSettlement -
+
+                royalty -
+
+                marketing -
+
+                rebate;
+
+              /*
+              -----------------------------------
+              DISPATCH COST
+              -----------------------------------
+              */
+
+              const dispatchCost =
+                Number(
+                  product.dispatch_cost || 0
+                );
+
+              /*
+              -----------------------------------
+              RETURN CHARGE
+              -----------------------------------
+              */
+
+              const returnCharge =
+                Number(
+                  product.return_charge || 0
+                );
+
+              /*
+              -----------------------------------
+              RETURN COST
+              -----------------------------------
+              */
+
+              const returnCost =
+                dispatchCost +
+                returnCharge;
+
+              /*
+              -----------------------------------
+              RTV CODB
+              -----------------------------------
+              */
+
+              const returnCODB =
+                Number(
+                  product.rtv_codb || 0
+                );
+
+              /*
+              -----------------------------------
+              FINAL PAYOUT
+              -----------------------------------
+              */
+
+              const payoutAfterCODB =
+                payoutBeforeCODB -
+
+                returnCost -
+
+                returnCODB;
+
+              /*
+              -----------------------------------
+              TP
+              -----------------------------------
+              */
+
+              const tp =
+                Number(
+                  product.tp || 0
+                );
+
+              /*
+              -----------------------------------
+              TP PROFIT RS
+              -----------------------------------
+              */
+
+              const tpProfitRs =
+                payoutAfterCODB -
+                tp;
+
+              /*
+              -----------------------------------
+              TP PROFIT %
+              -----------------------------------
+              */
+
+              const tpProfitPercent =
+                tp
+                  ? (
+                      (
+                        tpProfitRs /
+                        tp
+                      ) * 100
+                    )
+                  : 0;
+
+              /*
+              -----------------------------------
+              THRESHOLD
+              -----------------------------------
+              */
+
+              const allowedLoss =
+                product.status ===
+                'CONTINUE'
+
+                  ? -15
+                  : -40;
+
+              /*
+              -----------------------------------
+              RECO STATUS
+              -----------------------------------
+              */
+
+              const recoStatus =
+                tpProfitPercent >=
+                allowedLoss
+
+                  ? 'OPT-IN'
+                  : 'OPT-OUT';
+
+              processedRows.push({
+
+                styleId:
+                  item.styleId,
+
+                brand:
+                  product.brand,
+
+                recommendedPrice:
+                  item.recommendedPrice,
+
+                uploadSettlement:
+                  item.settlementPrice,
+
+                tdsTcs,
+
+                bankSettlement,
+
+                royalty,
+
+                marketing,
+
+                rebate,
+
+                payoutBeforeCODB,
+
+                dispatchCost,
+
+                returnCharge,
+
+                returnCost,
+
+                returnCODB,
+
+                payoutAfterCODB,
+
+                tp,
+
+                tpProfitRs,
+
+                tpProfitPercent,
+
+                recoStatus
+
+              });
+
+            } catch (error) {
+
+              console.error(
+                error
+              );
+
+              processedRows.push({
+
+                styleId:
+                  item.styleId,
+
+                recommendedPrice:
+                  item.recommendedPrice,
+
+                uploadSettlement:
+                  item.settlementPrice,
+
+                recoStatus:
+                  'OPT-OUT'
+
+              });
+
+            }
+
+          }
+        );
+
+        const optInCount =
+          processedRows.filter(
+            row =>
+              row.recoStatus ===
+              'OPT-IN'
+          ).length;
+
+        const optOutCount =
+          processedRows.filter(
+            row =>
+              row.recoStatus ===
+              'OPT-OUT'
+          ).length;
+
+        const notFoundCount =
+          processedRows.filter(
+            row =>
+              row.recoStatus ===
+              'NOT FOUND'
+          ).length;
+
+        resultArea.innerHTML = `
+
+          ${renderKPICards({
+
+            total:
+              processedRows.length,
+
+            optIn:
+              optInCount,
+
+            optOut:
+              optOutCount,
+
+            notFound:
+              notFoundCount
+
+          })}
+
+          <div
+            style="
+              margin-top:24px;
+            "
+          >
+
+            <button
+              class="tab-btn active"
+              id="exportRecoFile"
+            >
+
+              Export CSV
+
+            </button>
+
+          </div>
+
+          <div
+            style="
+              margin-top:24px;
+            "
+          >
+
+            ${renderResultTable(
+              processedRows
+            )}
+
+          </div>
+
+        `;
+
+        document
+          .getElementById(
+            'exportRecoFile'
+          )
+          .addEventListener(
+            'click',
+            exportToCSV
+          );
+
+      }, 300);
+
+    }
+  );
+
+}
