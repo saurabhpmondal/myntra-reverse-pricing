@@ -1,18 +1,39 @@
 import {
+  initializeApp
+} from './services/dataLoader.js';
+
+import {
+  renderHeader
+} from './components/header.js';
+
+import {
   renderTabs
 } from './components/tabs.js';
 
 import {
-  renderDashboard
-} from './reports/dashboardReport.js';
+  renderFilters
+} from './components/filters.js';
+
+import {
+  renderSummaryCards
+} from './reports/summaryCards.js';
 
 import {
   renderReversePricingReport
 } from './reports/reversePricingReport.js';
 
 import {
+  renderDashboard
+} from './reports/dashboardReport.js';
+
+import {
+  renderPricingCalculator,
+  initializePricingCalculator
+} from './calculators/pricingCalculator.js';
+
+import {
   renderBestBrandReport,
-  initializeBestBrandReport
+  initializeBestBrand
 } from './reports/bestBrandReport.js';
 
 import {
@@ -30,111 +51,451 @@ import {
   initializeRecoReport
 } from './reports/recoReport.js';
 
-import {
-  appCache
-} from './services/cacheService.js';
+let activeTab = 'dashboard';
 
-/* -----------------------------------
-APP STATE
------------------------------------ */
-
-let activeTab =
-  'dashboard';
-
-/* -----------------------------------
-FILTER STATE
------------------------------------ */
-
-const filters = {
+let filters = {
 
   brand: '',
   articleType: '',
   status: '',
   search: '',
+
   continueRule: 'TP+5%',
   otherRule: 'TP'
 
 };
 
 /* -----------------------------------
-RENDER ACTIVE REPORT
+GLOBAL LOADER
 ----------------------------------- */
 
-function renderActiveReport() {
+function showGlobalLoader() {
+
+  const loader =
+    document.getElementById(
+      'globalLoader'
+    );
+
+  if (loader) {
+
+    loader.style.display =
+      'flex';
+
+  }
+
+}
+
+function hideGlobalLoader() {
+
+  const loader =
+    document.getElementById(
+      'globalLoader'
+    );
+
+  if (loader) {
+
+    loader.style.display =
+      'none';
+
+  }
+
+}
+
+/* -----------------------------------
+RENDER CONTENT
+----------------------------------- */
+
+function renderContent() {
+
+  const content =
+    document.getElementById(
+      'contentArea'
+    );
+
+  if (!content) {
+    return;
+  }
+
+  /*
+  -----------------------------------
+  DASHBOARD
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'dashboard'
   ) {
 
-    return renderDashboard();
+    content.innerHTML =
+      renderDashboard(filters);
+
+    initializeQuickActions();
+
+    return;
 
   }
+
+  /*
+  -----------------------------------
+  REVERSE PRICING
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'reverse-pricing'
   ) {
 
-    return renderReversePricingReport(
-      filters
-    );
+    content.innerHTML =
+      renderReversePricingReport(
+        filters
+      );
+
+    return;
 
   }
+
+  /*
+  -----------------------------------
+  PRICING CALCULATOR
+  -----------------------------------
+  */
+
+  if (
+    activeTab ===
+    'pricing-calculator'
+  ) {
+
+    content.innerHTML =
+      renderPricingCalculator();
+
+    initializePricingCalculator();
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
+  BEST BRAND
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'best-brand'
   ) {
 
-    return renderBestBrandReport();
+    content.innerHTML =
+      renderBestBrandReport();
+
+    initializeBestBrand();
+
+    return;
 
   }
+
+  /*
+  -----------------------------------
+  BULK PRICING
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'bulk-pricing'
   ) {
 
-    return renderBulkPricingReport();
+    content.innerHTML =
+      renderBulkPricingReport();
+
+    initializeBulkPricing();
+
+    return;
 
   }
+
+  /*
+  -----------------------------------
+  REBATES
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'rebates'
   ) {
 
-    return renderRebateReport();
+    content.innerHTML =
+      renderRebateReport();
+
+    initializeRebateReport();
+
+    return;
 
   }
+
+  /*
+  -----------------------------------
+  RECO ENGINE
+  -----------------------------------
+  */
 
   if (
     activeTab ===
     'reco-engine'
   ) {
 
-    return renderRecoReport();
+    content.innerHTML =
+      renderRecoReport();
+
+    initializeRecoReport();
+
+    return;
 
   }
 
-  return `
+  /*
+  -----------------------------------
+  DEFAULT
+  -----------------------------------
+  */
 
-    <div class="empty-state">
+  content.innerHTML = `
 
-      Report not found
+    <div class="placeholder-content">
+
+      ${activeTab
+        .replaceAll('-', ' ')
+        .toUpperCase()}
 
     </div>
 
   `;
+}
+
+/* -----------------------------------
+TAB UI
+----------------------------------- */
+
+function setActiveTabUI() {
+
+  document
+    .querySelectorAll('.tab-btn')
+    .forEach(btn => {
+
+      btn.classList.remove(
+        'active'
+      );
+
+      if (
+        btn.dataset.tab ===
+        activeTab
+      ) {
+
+        btn.classList.add(
+          'active'
+        );
+
+      }
+
+    });
+
+}
+
+function switchTab(tabId) {
+
+  activeTab = tabId;
+
+  setActiveTabUI();
+
+  renderContent();
 
 }
 
 /* -----------------------------------
-RENDER APP
+QUICK ACTIONS
 ----------------------------------- */
 
-export function renderApp() {
+function initializeQuickActions() {
+
+  const cards =
+    document.querySelectorAll(
+      '.quick-action-card'
+    );
+
+  cards.forEach(card => {
+
+    card.addEventListener(
+      'click',
+      () => {
+
+        switchTab(
+          card.dataset.tabTarget
+        );
+
+      }
+    );
+
+  });
+
+}
+
+/* -----------------------------------
+TABS
+----------------------------------- */
+
+function initializeTabs() {
+
+  const tabButtons =
+    document.querySelectorAll(
+      '.tab-btn'
+    );
+
+  tabButtons.forEach(button => {
+
+    button.addEventListener(
+      'click',
+      () => {
+
+        switchTab(
+          button.dataset.tab
+        );
+
+      }
+    );
+
+  });
+
+}
+
+/* -----------------------------------
+FILTERS
+----------------------------------- */
+
+function initializeFilters() {
+
+  const brandFilter =
+    document.getElementById(
+      'brandFilter'
+    );
+
+  const articleFilter =
+    document.getElementById(
+      'articleFilter'
+    );
+
+  const statusFilter =
+    document.getElementById(
+      'statusFilter'
+    );
+
+  const continueRuleFilter =
+    document.getElementById(
+      'continueRuleFilter'
+    );
+
+  const otherRuleFilter =
+    document.getElementById(
+      'otherRuleFilter'
+    );
+
+  const searchInput =
+    document.getElementById(
+      'globalSearch'
+    );
+
+  let debounceTimer = null;
+
+  brandFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.brand =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  articleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.articleType =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  statusFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.status =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  continueRuleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.continueRule =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  otherRuleFilter.addEventListener(
+    'change',
+    event => {
+
+      filters.otherRule =
+        event.target.value;
+
+      renderContent();
+
+    }
+  );
+
+  searchInput.addEventListener(
+    'input',
+    event => {
+
+      clearTimeout(
+        debounceTimer
+      );
+
+      debounceTimer =
+        setTimeout(() => {
+
+          filters.search =
+            event.target.value;
+
+          renderContent();
+
+        }, 300);
+
+    }
+  );
+
+}
+
+/* -----------------------------------
+BOOTSTRAP UI
+----------------------------------- */
+
+async function bootstrapUI() {
 
   const app =
     document.getElementById(
@@ -143,15 +504,24 @@ export function renderApp() {
 
   app.innerHTML = `
 
-    <div class="app-layout">
+    <div class="app-shell">
 
-      ${renderTabs(
-        activeTab
-      )}
+      ${renderHeader()}
 
-      <div class="page-content">
+      <div class="app-content">
 
-        ${renderActiveReport()}
+        ${renderFilters()}
+
+        ${renderSummaryCards()}
+
+        ${renderTabs(activeTab)}
+
+        <div
+          class="content-section"
+          id="contentArea"
+        >
+
+        </div>
 
       </div>
 
@@ -159,83 +529,74 @@ export function renderApp() {
 
   `;
 
-  /*
-  -----------------------------------
-  INITIALIZE REPORTS
-  -----------------------------------
-  */
+  initializeTabs();
 
-  if (
-    activeTab ===
-    'best-brand'
-  ) {
+  initializeFilters();
 
-    initializeBestBrandReport();
-
-  }
-
-  if (
-    activeTab ===
-    'bulk-pricing'
-  ) {
-
-    initializeBulkPricing();
-
-  }
-
-  if (
-    activeTab ===
-    'rebates'
-  ) {
-
-    initializeRebateReport();
-
-  }
-
-  if (
-    activeTab ===
-    'reco-engine'
-  ) {
-
-    initializeRecoReport();
-
-  }
-
-  /*
-  -----------------------------------
-  TAB EVENTS
-  -----------------------------------
-  */
-
-  document
-    .querySelectorAll(
-      '.tab-btn[data-tab]'
-    )
-    .forEach(button => {
-
-      button.onclick =
-        () => {
-
-          activeTab =
-            button.dataset.tab;
-
-          renderApp();
-
-        };
-
-    });
+  renderContent();
 
 }
 
 /* -----------------------------------
-INITIALIZE APP
+APP START
 ----------------------------------- */
 
-window.addEventListener(
+document.addEventListener(
   'DOMContentLoaded',
-  () => {
+  async () => {
 
-    renderApp();
+    document.body.insertAdjacentHTML(
+      'beforeend',
+
+      `
+
+      <div
+        class="global-loader"
+        id="globalLoader"
+      >
+
+        <div class="global-loader-content">
+
+          <div class="loader-spinner">
+
+          </div>
+
+          <div class="loader-title">
+
+            Loading Pricing Engine
+
+          </div>
+
+          <div class="loader-subtitle">
+
+            Preparing marketplace intelligence...
+
+          </div>
+
+        </div>
+
+      </div>
+
+      `
+    );
+
+    try {
+
+      showGlobalLoader();
+
+      await initializeApp();
+
+      await bootstrapUI();
+
+      hideGlobalLoader();
+
+    } catch (error) {
+
+      console.error(error);
+
+      hideGlobalLoader();
+
+    }
 
   }
 );
