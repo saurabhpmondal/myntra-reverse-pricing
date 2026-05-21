@@ -104,7 +104,7 @@ export function renderTabs(
         data-tab="rebates"
       >
 
-        Rebates
+        Rebate Engine
 
       </button>
 
