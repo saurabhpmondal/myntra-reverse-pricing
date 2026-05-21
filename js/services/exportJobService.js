@@ -1,10 +1,24 @@
 /* -----------------------------------
-GLOBAL EXPORT JOB STORE
+GLOBAL STORE
 ----------------------------------- */
 
 if (!window.exportJobs) {
 
   window.exportJobs = [];
+
+}
+
+/* -----------------------------------
+NOTIFY UI
+----------------------------------- */
+
+function notifyExportListeners() {
+
+  window.dispatchEvent(
+    new CustomEvent(
+      'export-jobs-updated'
+    )
+  );
 
 }
 
@@ -35,6 +49,8 @@ export function createExportJob({
 
     rows: [],
 
+    error: null,
+
     createdAt:
       new Date()
         .toISOString(),
@@ -47,6 +63,8 @@ export function createExportJob({
   window.exportJobs.unshift(
     job
   );
+
+  notifyExportListeners();
 
   return job;
 
@@ -76,17 +94,7 @@ export function updateExportJob(
     updates
   );
 
-}
-
-/* -----------------------------------
-GET JOBS
------------------------------------ */
-
-export function getExportJobs() {
-
-  return (
-    window.exportJobs || []
-  );
+  notifyExportListeners();
 
 }
 
@@ -114,7 +122,12 @@ export function completeExportJob(
 
   job.progress = 100;
 
+  job.processed =
+    job.total;
+
   job.rows = rows;
+
+  notifyExportListeners();
 
 }
 
@@ -144,6 +157,20 @@ export function failExportJob(
     error?.message ||
     'Unknown Error';
 
+  notifyExportListeners();
+
+}
+
+/* -----------------------------------
+GET JOBS
+----------------------------------- */
+
+export function getExportJobs() {
+
+  return (
+    window.exportJobs || []
+  );
+
 }
 
 /* -----------------------------------
@@ -167,7 +194,13 @@ export function downloadExportJob(
   if (
     !job.rows?.length
   ) {
+
+    alert(
+      'Export not ready'
+    );
+
     return;
+
   }
 
   if (
@@ -183,10 +216,22 @@ export function downloadExportJob(
 
   }
 
+  /*
+  -----------------------------------
+  WORKSHEET
+  -----------------------------------
+  */
+
   const worksheet =
     XLSX.utils.json_to_sheet(
       job.rows
     );
+
+  /*
+  -----------------------------------
+  WORKBOOK
+  -----------------------------------
+  */
 
   const workbook =
     XLSX.utils.book_new();
@@ -198,6 +243,42 @@ export function downloadExportJob(
     'Export'
 
   );
+
+  /*
+  -----------------------------------
+  COLUMN WIDTH
+  -----------------------------------
+  */
+
+  const columnWidths =
+    Object.keys(
+      job.rows[0]
+    ).map(key => ({
+
+      wch: Math.max(
+
+        key.length,
+
+        ...job.rows.map(
+          row =>
+
+            String(
+              row[key] || ''
+            ).length
+        )
+
+      ) + 4
+
+    }));
+
+  worksheet['!cols'] =
+    columnWidths;
+
+  /*
+  -----------------------------------
+  DOWNLOAD
+  -----------------------------------
+  */
 
   XLSX.writeFile(
     workbook,
