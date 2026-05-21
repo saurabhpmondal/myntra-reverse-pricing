@@ -104,6 +104,26 @@ function renderKPICards({
 
 }
 
+function getActionClass(
+  action
+) {
+
+  if (
+    action === 'OPT-IN'
+  ) {
+    return 'status-good';
+  }
+
+  if (
+    action === 'NOT FOUND'
+  ) {
+    return 'status-moderate';
+  }
+
+  return 'status-bad';
+
+}
+
 function renderResultTable(
   rows
 ) {
@@ -156,42 +176,164 @@ function renderResultTable(
 
             <tr>
 
-              <td>${row.styleId}</td>
-              <td>${row.brand}</td>
-              <td>${formatNumber(row.mrp)}</td>
-              <td>${formatNumber(row.td)}%</td>
-              <td>${formatNumber(row.rebatePercent)}%</td>
-              <td>${formatNumber(row.targetISP)}</td>
-              <td>${formatNumber(row.gta)}</td>
-              <td>${formatNumber(row.listPrice)}</td>
-              <td>${formatNumber(row.comPercent)}%</td>
-              <td>${formatNumber(row.comRs)}</td>
-              <td>${formatNumber(row.fixedFee)}</td>
-              <td>${formatNumber(row.taxOnComFee)}</td>
-              <td>${formatNumber(row.uploadSettlement)}</td>
-              <td>${formatNumber(row.tdsTcs)}</td>
-              <td>${formatNumber(row.bankSettlement)}</td>
-              <td>${formatNumber(row.royalty)}</td>
-              <td>${formatNumber(row.marketing)}</td>
-              <td>${formatNumber(row.rebateAmount)}</td>
-              <td>${formatNumber(row.payoutBeforeCODB)}</td>
-              <td>${formatNumber(row.dispatchCost)}</td>
-              <td>${formatNumber(row.returnCharge)}</td>
-              <td>${formatNumber(row.returnCost)}</td>
-              <td>${formatNumber(row.returnCODB)}</td>
-              <td>${formatNumber(row.payoutAfterCODB)}</td>
-              <td>${formatNumber(row.tp)}</td>
-              <td>${formatNumber(row.tpProfitPercent)}%</td>
+              <td>
+                ${row.styleId || '-'}
+              </td>
+
+              <td>
+                ${row.brand || '-'}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.mrp
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.td
+                )}%
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.rebatePercent
+                )}%
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.targetISP
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.gta
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.listPrice
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.comPercent
+                )}%
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.comRs
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.fixedFee
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.taxOnComFee
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.uploadSettlement
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.tdsTcs
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.bankSettlement
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.royalty
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.marketing
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.rebateAmount
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.payoutBeforeCODB
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.dispatchCost
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.returnCharge
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.returnCost
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.returnCODB
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.payoutAfterCODB
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.tp
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  row.tpProfitPercent
+                )}%
+              </td>
 
               <td>
 
                 <span class="
-                  ${
-                    row.rebateAction ===
-                    'OPT-IN'
-                      ? 'status-good'
-                      : 'status-bad'
-                  }
+                  ${getActionClass(
+                    row.rebateAction
+                  )}
                 ">
 
                   ${row.rebateAction}
@@ -403,268 +545,368 @@ export function initializeRebateReport() {
 
       processedRows = [];
 
-      uploadedRows.forEach(
-        item => {
+      resultArea.innerHTML = `
 
-          const product =
-            appCache.productMaster.find(
-              row =>
-                row.style_id ===
-                item.styleId
-            );
+        <div class="bulk-processing-loader">
 
-          if (!product) {
+          <div class="bulk-processing-spinner">
 
-            processedRows.push({
+          </div>
 
-              styleId:
-                item.styleId,
+          <div>
 
-              rebateAction:
-                'NOT FOUND'
+            Processing rebate engine...
 
-            });
+          </div>
 
-            return;
+        </div>
 
-          }
+      `;
 
-          try {
+      setTimeout(() => {
 
-            const settlement =
-              calculateSettlement({
+        uploadedRows.forEach(
+          item => {
+
+            const product =
+              appCache.productMaster.find(
+                row =>
+                  row.style_id ===
+                  item.styleId
+              );
+
+            /*
+            -----------------------------------
+            NOT FOUND
+            -----------------------------------
+            */
+
+            if (!product) {
+
+              processedRows.push({
+
+                styleId:
+                  item.styleId,
+
+                rebatePercent:
+                  item.rebatePercent,
+
+                targetISP:
+                  item.targetISP,
+
+                rebateAction:
+                  'NOT FOUND'
+
+              });
+
+              return;
+
+            }
+
+            try {
+
+              /*
+              -----------------------------------
+              SETTLEMENT
+              -----------------------------------
+              */
+
+              const settlement =
+                calculateSettlement({
+
+                  brand:
+                    product.brand,
+
+                  articleType:
+                    product.article_type,
+
+                  sellingPrice:
+                    item.targetISP,
+
+                  tp:
+                    Number(
+                      product.tp
+                    ),
+
+                  mrp:
+                    Number(
+                      product.mrp
+                    )
+
+                });
+
+              /*
+              -----------------------------------
+              REBATE
+              -----------------------------------
+              */
+
+              const rebateAmount =
+                (
+                  item.targetISP *
+
+                  item.rebatePercent
+
+                ) / 100;
+
+              /*
+              -----------------------------------
+              ADJUSTED PAYOUT
+              -----------------------------------
+              */
+
+              const adjustedPayout =
+                settlement
+                  .payoutAfterCODB +
+
+                rebateAmount;
+
+              /*
+              -----------------------------------
+              TP %
+              -----------------------------------
+              */
+
+              const tpProfitPercent =
+                (
+                  (
+                    adjustedPayout -
+
+                    Number(
+                      product.tp
+                    )
+
+                  ) /
+
+                  Number(
+                    product.tp
+                  )
+
+                ) * 100;
+
+              /*
+              -----------------------------------
+              CONTINUE LOGIC
+              -----------------------------------
+              */
+
+              const allowedLoss =
+                product.status ===
+                'CONTINUE'
+
+                  ? -15
+                  : -40;
+
+              const rebateAction =
+                tpProfitPercent >=
+                allowedLoss
+
+                  ? 'OPT-IN'
+                  : 'OPT-OUT';
+
+              /*
+              -----------------------------------
+              PUSH
+              -----------------------------------
+              */
+
+              processedRows.push({
+
+                styleId:
+                  item.styleId,
 
                 brand:
                   product.brand,
 
-                articleType:
-                  product.article_type,
+                mrp:
+                  Number(
+                    product.mrp
+                  ),
 
-                sellingPrice:
+                td:
+                  settlement
+                    .tradeDiscount,
+
+                rebatePercent:
+                  item.rebatePercent,
+
+                targetISP:
                   item.targetISP,
+
+                gta:
+                  settlement
+                    .gtaCharge,
+
+                listPrice:
+                  settlement
+                    .sellerPrice,
+
+                comPercent:
+                  settlement
+                    .commissionPercent,
+
+                comRs:
+                  settlement
+                    .commissionRs,
+
+                fixedFee:
+                  settlement
+                    .fixedFee,
+
+                taxOnComFee:
+                  settlement
+                    .gstOnComAndFee,
+
+                uploadSettlement:
+                  settlement
+                    .uploadSettlement,
+
+                tdsTcs:
+                  settlement
+                    .totalTaxDeduction,
+
+                bankSettlement:
+                  settlement
+                    .bankSettlement,
+
+                royalty:
+                  settlement
+                    .royalty,
+
+                marketing:
+                  settlement
+                    .marketing,
+
+                rebateAmount,
+
+                payoutBeforeCODB:
+                  settlement
+                    .payoutBeforeCODB,
+
+                dispatchCost:
+                  settlement
+                    .dispatchCost,
+
+                returnCharge:
+                  settlement
+                    .baseReturnCost,
+
+                returnCost:
+                  settlement
+                    .returnCost,
+
+                returnCODB:
+                  settlement
+                    .rtvCodb,
+
+                payoutAfterCODB:
+                  adjustedPayout,
 
                 tp:
                   Number(
                     product.tp
                   ),
 
-                mrp:
-                  Number(
-                    product.mrp
-                  )
+                tpProfitPercent,
+
+                rebateAction
 
               });
 
-            const rebateAmount =
-              (
-                item.targetISP *
-                item.rebatePercent
-              ) / 100;
+            } catch (error) {
 
-            const adjustedPayout =
-              settlement
-                .payoutAfterCODB +
-              rebateAmount;
+              processedRows.push({
 
-            const tpProfitPercent =
-              (
-                (
-                  adjustedPayout -
-                  Number(
-                    product.tp
-                  )
-                ) /
-                Number(
-                  product.tp
-                )
-              ) * 100;
+                styleId:
+                  item.styleId,
 
-            const allowedLoss =
-              product.status ===
-              'CONTINUE'
-                ? -15
-                : -40;
+                rebatePercent:
+                  item.rebatePercent,
 
-            const rebateAction =
-              tpProfitPercent >=
-              allowedLoss
-                ? 'OPT-IN'
-                : 'OPT-OUT';
+                targetISP:
+                  item.targetISP,
 
-            processedRows.push({
+                rebateAction:
+                  'OPT-OUT'
 
-              styleId:
-                item.styleId,
+              });
 
-              brand:
-                product.brand,
-
-              mrp:
-                product.mrp,
-
-              td:
-                (
-                  (
-                    product.mrp -
-                    item.targetISP
-                  ) * 100
-                ) /
-                product.mrp,
-
-              rebatePercent:
-                item.rebatePercent,
-
-              targetISP:
-                item.targetISP,
-
-              gta:
-                settlement.gtaCharge,
-
-              listPrice:
-                settlement.sellerPrice,
-
-              comPercent:
-                settlement.commissionPercent,
-
-              comRs:
-                settlement.commissionRs,
-
-              fixedFee:
-                settlement.fixedFee,
-
-              taxOnComFee:
-                settlement.gstOnComAndFee,
-
-              uploadSettlement:
-                settlement.uploadSettlement,
-
-              tdsTcs:
-                settlement.totalTaxDeduction,
-
-              bankSettlement:
-                settlement.bankSettlement,
-
-              royalty:
-                settlement.royalty,
-
-              marketing:
-                settlement.marketing,
-
-              rebateAmount,
-
-              payoutBeforeCODB:
-                settlement.payoutBeforeCODB,
-
-              dispatchCost:
-                settlement.dispatchCost,
-
-              returnCharge:
-                settlement.baseReturnCost,
-
-              returnCost:
-                settlement.returnCost,
-
-              returnCODB:
-                settlement.rtvCodb,
-
-              payoutAfterCODB:
-                adjustedPayout,
-
-              tp:
-                product.tp,
-
-              tpProfitPercent,
-
-              rebateAction
-
-            });
-
-          } catch (error) {
-
-            processedRows.push({
-
-              styleId:
-                item.styleId,
-
-              rebateAction:
-                'OPT-OUT'
-
-            });
+            }
 
           }
+        );
 
-        }
-      );
+        const optInCount =
+          processedRows.filter(
+            row =>
+              row.rebateAction ===
+              'OPT-IN'
+          ).length;
 
-      const optInCount =
-        processedRows.filter(
-          row =>
-            row.rebateAction ===
-            'OPT-IN'
-        ).length;
+        const optOutCount =
+          processedRows.filter(
+            row =>
+              row.rebateAction ===
+              'OPT-OUT'
+          ).length;
 
-      const optOutCount =
-        processedRows.filter(
-          row =>
-            row.rebateAction ===
-            'OPT-OUT'
-        ).length;
+        const notFoundCount =
+          processedRows.filter(
+            row =>
+              row.rebateAction ===
+              'NOT FOUND'
+          ).length;
 
-      const notFoundCount =
-        processedRows.filter(
-          row =>
-            row.rebateAction ===
-            'NOT FOUND'
-        ).length;
+        resultArea.innerHTML = `
 
-      resultArea.innerHTML = `
+          ${renderKPICards({
 
-        ${renderKPICards({
+            total:
+              processedRows.length,
 
-          total:
-            processedRows.length,
+            optIn:
+              optInCount,
 
-          optIn:
-            optInCount,
+            optOut:
+              optOutCount,
 
-          optOut:
-            optOutCount,
+            notFound:
+              notFoundCount
 
-          notFound:
-            notFoundCount
+          })}
 
-        })}
-
-        <div
-          style="
-            margin-top:24px;
-          "
-        >
-
-          <button
-            class="tab-btn active"
-            id="exportRebateFile"
+          <div
+            style="
+              margin-top:24px;
+            "
           >
 
-            Export XLSX
+            <button
+              class="tab-btn active"
+              id="exportRebateFile"
+            >
 
-          </button>
+              Export XLSX
 
-        </div>
+            </button>
 
-        <div
-          style="
-            margin-top:24px;
-          "
-        >
+          </div>
 
-          ${renderResultTable(
-            processedRows
-          )}
+          <div
+            style="
+              margin-top:24px;
+            "
+          >
 
-        </div>
+            ${renderResultTable(
+              processedRows
+            )}
 
-      `;
+          </div>
+
+        `;
+
+      }, 300);
 
     }
   );
