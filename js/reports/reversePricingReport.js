@@ -16,6 +16,13 @@ import {
 } from '../components/exportJobsPanel.js';
 
 /* -----------------------------------
+INITIALIZE PANEL ONCE
+----------------------------------- */
+
+let exportPanelInitialized =
+  false;
+
+/* -----------------------------------
 FORMAT NUMBER
 ----------------------------------- */
 
@@ -613,6 +620,8 @@ export function renderReversePricingReport(
 
     return `
 
+      ${renderExportJobsPanel()}
+
       <div class="empty-state">
 
         No products found
@@ -639,7 +648,24 @@ export function renderReversePricingReport(
 
     /*
     -----------------------------------
-    EXPORT JOB
+    INITIALIZE PANEL ONCE
+    -----------------------------------
+    */
+
+    if (
+      !exportPanelInitialized
+    ) {
+
+      initializeExportJobsPanel();
+
+      exportPanelInitialized =
+        true;
+
+    }
+
+    /*
+    -----------------------------------
+    EXPORT BUTTON
     -----------------------------------
     */
 
@@ -650,8 +676,7 @@ export function renderReversePricingReport(
 
     if (exportBtn) {
 
-      exportBtn.addEventListener(
-        'click',
+      exportBtn.onclick =
         async () => {
 
           exportBtn.disabled =
@@ -684,18 +709,9 @@ export function renderReversePricingReport(
           exportBtn.textContent =
             'Generate Export';
 
-        }
-      );
+        };
 
     }
-
-    /*
-    -----------------------------------
-    DOWNLOAD EVENTS
-    -----------------------------------
-    */
-
-    initializeExportJobsPanel();
 
   }, 0);
 
