@@ -19,7 +19,9 @@ import {
 } from './reports/summaryCards.js';
 
 import {
-  renderReversePricingReport
+  renderReversePricingReport,
+  initializeReversePricingGeneration,
+  resetReversePricingGeneration
 } from './reports/reversePricingReport.js';
 
 import {
@@ -151,6 +153,10 @@ function renderContent() {
       renderReversePricingReport(
         filters
       );
+
+    initializeReversePricingGeneration(
+      renderContent
+    );
 
     return;
 
@@ -415,6 +421,8 @@ function initializeFilters() {
       filters.brand =
         event.target.value;
 
+      resetReversePricingGeneration();
+
       renderContent();
 
     }
@@ -426,6 +434,8 @@ function initializeFilters() {
 
       filters.articleType =
         event.target.value;
+
+      resetReversePricingGeneration();
 
       renderContent();
 
@@ -439,6 +449,8 @@ function initializeFilters() {
       filters.status =
         event.target.value;
 
+      resetReversePricingGeneration();
+
       renderContent();
 
     }
@@ -451,6 +463,8 @@ function initializeFilters() {
       filters.continueRule =
         event.target.value;
 
+      resetReversePricingGeneration();
+
       renderContent();
 
     }
@@ -462,6 +476,8 @@ function initializeFilters() {
 
       filters.otherRule =
         event.target.value;
+
+      resetReversePricingGeneration();
 
       renderContent();
 
@@ -481,6 +497,8 @@ function initializeFilters() {
 
           filters.search =
             event.target.value;
+
+          resetReversePricingGeneration();
 
           renderContent();
 
