@@ -6,20 +6,7 @@ import {
   generatePricingLadder
 } from '../engine/pricingEngine.js';
 
-import {
-  processExportJob
-} from '../utils/exportProcessor.js';
-
-import {
-  renderExportJobsPanel,
-  initializeExportJobsPanel
-} from '../components/exportJobsPanel.js';
-
-/* -----------------------------------
-INITIALIZE PANEL ONCE
------------------------------------ */
-
-let exportPanelInitialized =
+let reversePricingGenerated =
   false;
 
 /* -----------------------------------
@@ -33,8 +20,7 @@ function formatNumber(value) {
   ).toLocaleString(
     'en-IN',
     {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2
+      maximumFractionDigits: 2
     }
   );
 
@@ -49,32 +35,6 @@ function getProfitClass(value) {
   return value >= 0
     ? 'profit-positive'
     : 'profit-negative';
-
-}
-
-/* -----------------------------------
-TD %
------------------------------------ */
-
-function calculateTD(
-  mrp,
-  sp
-) {
-
-  if (
-    !mrp ||
-    !sp
-  ) {
-    return 0;
-  }
-
-  return (
-    (
-      (
-        mrp - sp
-      ) * 100
-    ) / mrp
-  );
 
 }
 
@@ -95,58 +55,76 @@ function filterProducts({
       .trim()
       .toUpperCase() || '';
 
-  return appCache.productMaster.filter(row => {
-
-    if (
-      brand &&
-      row.brand !== brand
-    ) {
-      return false;
-    }
-
-    if (
-      articleType &&
-      row.article_type !== articleType
-    ) {
-      return false;
-    }
-
-    if (
-      status &&
-      row.status !== status
-    ) {
-      return false;
-    }
-
-    if (searchValue) {
-
-      const combinedText = `
-
-        ${row.style_id}
-        ${row.erp_sku}
-        ${row.brand}
-        ${row.article_type}
-
-      `.toUpperCase();
+  return appCache.productMaster
+    .filter(row => {
 
       if (
-        !combinedText.includes(
-          searchValue
-        )
+        brand &&
+        row.brand !== brand
       ) {
         return false;
       }
 
-    }
+      if (
+        articleType &&
+        row.article_type !== articleType
+      ) {
+        return false;
+      }
 
-    return true;
+      if (
+        status &&
+        row.status !== status
+      ) {
+        return false;
+      }
 
-  });
+      if (searchValue) {
+
+        const combinedText = `
+
+          ${row.style_id}
+          ${row.erp_sku}
+          ${row.brand}
+          ${row.article_type}
+
+        `.toUpperCase();
+
+        if (
+          !combinedText.includes(
+            searchValue
+          )
+        ) {
+
+          return false;
+
+        }
+
+      }
+
+      return true;
+
+    })
+    .sort((a, b) => {
+
+      const aDate =
+        new Date(
+          a.launch_date || 0
+        );
+
+      const bDate =
+        new Date(
+          b.launch_date || 0
+        );
+
+      return bDate - aDate;
+
+    });
 
 }
 
 /* -----------------------------------
-RULE SELECTION
+RULE
 ----------------------------------- */
 
 function getRuleForStatus(
@@ -170,180 +148,6 @@ function getRuleForStatus(
     filters.otherRule ||
     'TP'
   );
-
-}
-
-/* -----------------------------------
-EXPORT ROW BUILDER
------------------------------------ */
-
-function buildExportRow(
-  product,
-  filters
-) {
-
-  try {
-
-    const selectedRule =
-      getRuleForStatus(
-        product,
-        filters
-      );
-
-    const pricingLadder =
-      generatePricingLadder({
-
-        brand:
-          product.brand,
-
-        articleType:
-          product.article_type,
-
-        status:
-          product.status,
-
-        tp:
-          Number(product.tp),
-
-        mrp:
-          Number(product.mrp)
-
-      });
-
-    const matchedRule =
-      pricingLadder.find(
-        item =>
-          item.pricingRule ===
-          selectedRule
-      );
-
-    if (!matchedRule) {
-      return null;
-    }
-
-    const s =
-      matchedRule.settlement;
-
-    const tdPercent =
-      calculateTD(
-
-        Number(
-          product.mrp
-        ),
-
-        Number(
-          matchedRule.derivedSP
-        )
-
-      );
-
-    return {
-
-      'Style ID':
-        product.style_id,
-
-      'ERP SKU':
-        product.erp_sku,
-
-      Brand:
-        product.brand,
-
-      'Article Type':
-        product.article_type,
-
-      Status:
-        product.status,
-
-      'Launch Date':
-        product.launch_date || '',
-
-      'Live Date':
-        product.live_date || '',
-
-      TP:
-        Number(product.tp),
-
-      Rule:
-        matchedRule.pricingRule,
-
-      SP:
-        matchedRule.derivedSP,
-
-      MRP:
-        Number(product.mrp),
-
-      'TD %':
-        tdPercent,
-
-      GTA:
-        s.gtaCharge,
-
-      'Seller Price':
-        s.sellerPrice,
-
-      'Commission %':
-        s.commissionPercent,
-
-      'Commission Rs':
-        s.commissionRs,
-
-      'Fixed Fee':
-        s.fixedFee,
-
-      GST:
-        s.gstOnComAndFee,
-
-      'Upload Settlement':
-        Math.ceil(
-          Number(
-            s.uploadSettlement || 0
-          )
-        ),
-
-      'TDS + TCS':
-        s.totalTaxDeduction,
-
-      'Bank Settlement':
-        s.bankSettlement,
-
-      Royalty:
-        s.royalty,
-
-      Marketing:
-        s.marketing,
-
-      'Payout Before CODB':
-        s.payoutBeforeCODB,
-
-      Dispatch:
-        s.dispatchCost,
-
-      'Return Cost':
-        s.returnCost,
-
-      'RTV CODB':
-        s.rtvCodb,
-
-      'Final Payout':
-        s.payoutAfterCODB,
-
-      'TP Profit Rs':
-        s.tpProfitRs,
-
-      'TP Profit %':
-        s.tpProfitPercent
-
-    };
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-    return null;
-
-  }
 
 }
 
@@ -402,19 +206,6 @@ function buildRows(
       const s =
         matchedRule.settlement;
 
-      const tdPercent =
-        calculateTD(
-
-          Number(
-            product.mrp
-          ),
-
-          Number(
-            matchedRule.derivedSP
-          )
-
-        );
-
       rows.push(`
 
         <tr>
@@ -444,7 +235,7 @@ function buildRows(
           <td>${formatNumber(product.mrp)}</td>
 
           <td>${formatNumber(
-            tdPercent
+            s.tradeDiscount
           )}%</td>
 
           <td>${formatNumber(
@@ -471,12 +262,8 @@ function buildRows(
             s.gstOnComAndFee
           )}</td>
 
-          <td>${formatNumber(
-            Math.ceil(
-              Number(
-                s.uploadSettlement || 0
-              )
-            )
+          <td>${Math.ceil(
+            s.uploadSettlement
           )}</td>
 
           <td>${formatNumber(
@@ -559,68 +346,79 @@ export function renderReversePricingReport(
   filters
 ) {
 
-  const fullFilteredProducts =
-    filterProducts(filters);
-
-  /*
-  -----------------------------------
-  SMART RENDERING
-  -----------------------------------
-  */
-
-  const hasActiveFilters =
-    filters.brand ||
-    filters.articleType ||
-    filters.status ||
-    filters.search;
-
-  let visibleProducts = [];
-
-  /*
-  -----------------------------------
-  DEFAULT VIEW
-  -----------------------------------
-  */
-
-  if (!hasActiveFilters) {
-
-    visibleProducts =
-      [...fullFilteredProducts]
-
-        .sort((a, b) => {
-
-          const dateA =
-            new Date(
-              b.launch_date || 0
-            );
-
-          const dateB =
-            new Date(
-              a.launch_date || 0
-            );
-
-          return (
-            dateA - dateB
-          );
-
-        })
-
-        .slice(0, 50);
-
-  } else {
-
-    visibleProducts =
-      fullFilteredProducts;
-
-  }
-
   if (
-    !visibleProducts.length
+    !reversePricingGenerated
   ) {
 
     return `
 
-      ${renderExportJobsPanel()}
+      <div class="empty-state">
+
+        <div
+          style="
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:16px;
+            padding:60px 20px;
+          "
+        >
+
+          <div
+            style="
+              font-size:18px;
+              font-weight:600;
+            "
+          >
+
+            Reverse Pricing Engine Ready
+
+          </div>
+
+          <div
+            style="
+              color:#777;
+              text-align:center;
+              max-width:420px;
+              line-height:1.6;
+            "
+          >
+
+            Apply filters if needed and click generate pricing to run the pricing engine.
+
+          </div>
+
+          <button
+            class="tab-btn active"
+            id="generateReversePricingBtn"
+            style="
+              min-width:220px;
+              height:48px;
+            "
+          >
+
+            Generate Pricing
+
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  const filteredProducts =
+    filterProducts(filters)
+      .slice(0, 50);
+
+  if (
+    !filteredProducts.length
+  ) {
+
+    return `
 
       <div class="empty-state">
 
@@ -634,103 +432,11 @@ export function renderReversePricingReport(
 
   const tableRows =
     buildRows(
-      visibleProducts,
+      filteredProducts,
       filters
     );
 
-  /*
-  -----------------------------------
-  EVENTS
-  -----------------------------------
-  */
-
-  setTimeout(() => {
-
-    /*
-    -----------------------------------
-    INITIALIZE PANEL ONCE
-    -----------------------------------
-    */
-
-    if (
-      !exportPanelInitialized
-    ) {
-
-      initializeExportJobsPanel();
-
-      exportPanelInitialized =
-        true;
-
-    }
-
-    /*
-    -----------------------------------
-    EXPORT BUTTON
-    -----------------------------------
-    */
-
-    const exportBtn =
-      document.getElementById(
-        'exportReversePricing'
-      );
-
-    if (exportBtn) {
-
-      exportBtn.onclick =
-        async () => {
-
-          exportBtn.disabled =
-            true;
-
-          exportBtn.textContent =
-            'Generating Export...';
-
-          await processExportJob({
-
-            type:
-              'reverse_pricing',
-
-            products:
-              fullFilteredProducts,
-
-            rowBuilder:
-              product =>
-
-                buildExportRow(
-                  product,
-                  filters
-                )
-
-          });
-
-          exportBtn.disabled =
-            false;
-
-          exportBtn.textContent =
-            'Generate Export';
-
-        };
-
-    }
-
-  }, 0);
-
   return `
-
-    ${renderExportJobsPanel()}
-
-    <div class="report-actions-bar">
-
-      <button
-        class="tab-btn active"
-        id="exportReversePricing"
-      >
-
-        Generate Export
-
-      </button>
-
-    </div>
 
     <div class="report-table-wrapper">
 
@@ -815,5 +521,47 @@ export function renderReversePricingReport(
     </div>
 
   `;
+
+}
+
+/* -----------------------------------
+INITIALIZE
+----------------------------------- */
+
+export function initializeReversePricingGeneration(
+  renderCallback
+) {
+
+  const button =
+    document.getElementById(
+      'generateReversePricingBtn'
+    );
+
+  if (!button) {
+    return;
+  }
+
+  button.addEventListener(
+    'click',
+    () => {
+
+      reversePricingGenerated =
+        true;
+
+      renderCallback();
+
+    }
+  );
+
+}
+
+/* -----------------------------------
+RESET
+----------------------------------- */
+
+export function resetReversePricingGeneration() {
+
+  reversePricingGenerated =
+    false;
 
 }
