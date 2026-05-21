@@ -41,6 +41,11 @@ import {
   initializeBulkPricing
 } from './reports/bulkPricingReport.js';
 
+import {
+  renderRebateReport,
+  initializeRebateReport
+} from './reports/rebateReport.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
@@ -201,6 +206,26 @@ function renderContent() {
       renderBulkPricingReport();
 
     initializeBulkPricing();
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
+  REBATES
+  -----------------------------------
+  */
+
+  if (
+    activeTab ===
+    'rebates'
+  ) {
+
+    content.innerHTML =
+      renderRebateReport();
+
+    initializeRebateReport();
 
     return;
 
