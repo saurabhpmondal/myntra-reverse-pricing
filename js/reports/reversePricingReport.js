@@ -11,12 +11,6 @@ import {
 } from '../utils/exportExcel.js';
 
 /* -----------------------------------
-EXPORT CACHE
------------------------------------ */
-
-let currentExportRows = [];
-
-/* -----------------------------------
 FORMAT NUMBER
 ----------------------------------- */
 
@@ -168,22 +162,180 @@ function getRuleForStatus(
 }
 
 /* -----------------------------------
-EXPORT FUNCTION
+EXPORT
 ----------------------------------- */
 
-function exportReversePricing() {
+function exportReversePricing(
+  filters
+) {
 
-  if (
-    !currentExportRows.length
-  ) {
+  const allProducts =
+    filterProducts(filters);
 
-    alert(
-      'No pricing rows available'
-    );
+  const exportRows = [];
 
-    return;
+  allProducts.forEach(product => {
 
-  }
+    try {
+
+      const selectedRule =
+        getRuleForStatus(
+          product,
+          filters
+        );
+
+      const pricingLadder =
+        generatePricingLadder({
+
+          brand:
+            product.brand,
+
+          articleType:
+            product.article_type,
+
+          status:
+            product.status,
+
+          tp:
+            Number(product.tp),
+
+          mrp:
+            Number(product.mrp)
+
+        });
+
+      const matchedRule =
+        pricingLadder.find(
+          item =>
+            item.pricingRule ===
+            selectedRule
+        );
+
+      if (!matchedRule) {
+        return;
+      }
+
+      const s =
+        matchedRule.settlement;
+
+      const tdPercent =
+        calculateTD(
+
+          Number(
+            product.mrp
+          ),
+
+          Number(
+            matchedRule.derivedSP
+          )
+
+        );
+
+      exportRows.push({
+
+        'Style ID':
+          product.style_id,
+
+        'ERP SKU':
+          product.erp_sku,
+
+        Brand:
+          product.brand,
+
+        'Article Type':
+          product.article_type,
+
+        Status:
+          product.status,
+
+        'Launch Date':
+          product.launch_date || '',
+
+        'Live Date':
+          product.live_date || '',
+
+        TP:
+          Number(product.tp),
+
+        Rule:
+          matchedRule.pricingRule,
+
+        SP:
+          matchedRule.derivedSP,
+
+        MRP:
+          Number(product.mrp),
+
+        'TD %':
+          tdPercent,
+
+        GTA:
+          s.gtaCharge,
+
+        'Seller Price':
+          s.sellerPrice,
+
+        'Commission %':
+          s.commissionPercent,
+
+        'Commission Rs':
+          s.commissionRs,
+
+        'Fixed Fee':
+          s.fixedFee,
+
+        GST:
+          s.gstOnComAndFee,
+
+        'Upload Settlement':
+          Math.ceil(
+            Number(
+              s.uploadSettlement || 0
+            )
+          ),
+
+        'TDS + TCS':
+          s.totalTaxDeduction,
+
+        'Bank Settlement':
+          s.bankSettlement,
+
+        Royalty:
+          s.royalty,
+
+        Marketing:
+          s.marketing,
+
+        'Payout Before CODB':
+          s.payoutBeforeCODB,
+
+        Dispatch:
+          s.dispatchCost,
+
+        'Return Cost':
+          s.returnCost,
+
+        'RTV CODB':
+          s.rtvCodb,
+
+        'Final Payout':
+          s.payoutAfterCODB,
+
+        'TP Profit Rs':
+          s.tpProfitRs,
+
+        'TP Profit %':
+          s.tpProfitPercent
+
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  });
 
   exportToExcel({
 
@@ -191,27 +343,22 @@ function exportReversePricing() {
       'reverse_pricing_export.xlsx',
 
     rows:
-      currentExportRows
+      exportRows
 
   });
 
 }
 
 /* -----------------------------------
-BUILD ROWS
+BUILD TABLE ROWS
 ----------------------------------- */
 
 function buildRows(
   products,
-  filters,
-  isExportMode = false
+  filters
 ) {
 
   const rows = [];
-
-  if (isExportMode) {
-    currentExportRows = [];
-  }
 
   products.forEach(product => {
 
@@ -257,12 +404,6 @@ function buildRows(
       const s =
         matchedRule.settlement;
 
-      /*
-      -----------------------------------
-      TD %
-      -----------------------------------
-      */
-
       const tdPercent =
         calculateTD(
 
@@ -275,123 +416,6 @@ function buildRows(
           )
 
         );
-
-      /*
-      -----------------------------------
-      ROUND UP UPLOAD SETTLEMENT
-      -----------------------------------
-      */
-
-      const roundedUploadSettlement =
-        Math.ceil(
-          Number(
-            s.uploadSettlement || 0
-          )
-        );
-
-      /*
-      -----------------------------------
-      EXPORT DATA
-      -----------------------------------
-      */
-
-      if (isExportMode) {
-
-        currentExportRows.push({
-
-          'Style ID':
-            product.style_id,
-
-          'ERP SKU':
-            product.erp_sku,
-
-          Brand:
-            product.brand,
-
-          'Article Type':
-            product.article_type,
-
-          Status:
-            product.status,
-
-          TP:
-            Number(product.tp),
-
-          Rule:
-            matchedRule.pricingRule,
-
-          SP:
-            matchedRule.derivedSP,
-
-          MRP:
-            Number(product.mrp),
-
-          'TD %':
-            tdPercent,
-
-          GTA:
-            s.gtaCharge,
-
-          'Seller Price':
-            s.sellerPrice,
-
-          'Commission %':
-            s.commissionPercent,
-
-          'Commission Rs':
-            s.commissionRs,
-
-          'Fixed Fee':
-            s.fixedFee,
-
-          GST:
-            s.gstOnComAndFee,
-
-          'Upload Settlement':
-            roundedUploadSettlement,
-
-          'TDS + TCS':
-            s.totalTaxDeduction,
-
-          'Bank Settlement':
-            s.bankSettlement,
-
-          Royalty:
-            s.royalty,
-
-          Marketing:
-            s.marketing,
-
-          'Payout Before CODB':
-            s.payoutBeforeCODB,
-
-          Dispatch:
-            s.dispatchCost,
-
-          'Return Cost':
-            s.returnCost,
-
-          'RTV CODB':
-            s.rtvCodb,
-
-          'Final Payout':
-            s.payoutAfterCODB,
-
-          'TP Profit Rs':
-            s.tpProfitRs,
-
-          'TP Profit %':
-            s.tpProfitPercent
-
-        });
-
-      }
-
-      /*
-      -----------------------------------
-      TABLE ROWS
-      -----------------------------------
-      */
 
       rows.push(`
 
@@ -406,6 +430,10 @@ function buildRows(
           <td>${product.article_type}</td>
 
           <td>${product.status}</td>
+
+          <td>${product.launch_date || '-'}</td>
+
+          <td>${product.live_date || '-'}</td>
 
           <td>${formatNumber(product.tp)}</td>
 
@@ -446,7 +474,11 @@ function buildRows(
           )}</td>
 
           <td>${formatNumber(
-            roundedUploadSettlement
+            Math.ceil(
+              Number(
+                s.uploadSettlement || 0
+              )
+            )
           )}</td>
 
           <td>${formatNumber(
@@ -529,36 +561,67 @@ export function renderReversePricingReport(
   filters
 ) {
 
-  /*
-  -----------------------------------
-  FULL DATASET FOR EXPORT
-  -----------------------------------
-  */
-
   const fullFilteredProducts =
     filterProducts(filters);
 
   /*
   -----------------------------------
-  EXPORT DATA
+  SMART RENDERING
   -----------------------------------
   */
 
-  buildRows(
-    fullFilteredProducts,
-    filters,
-    true
-  );
+  const hasActiveFilters =
+    filters.brand ||
+    filters.articleType ||
+    filters.status ||
+    filters.search;
+
+  let visibleProducts = [];
 
   /*
   -----------------------------------
-  UI LIMITED TO 100
+  DEFAULT VIEW
+  LATEST 50
   -----------------------------------
   */
 
-  const visibleProducts =
-    fullFilteredProducts
-      .slice(0, 100);
+  if (!hasActiveFilters) {
+
+    visibleProducts =
+      [...fullFilteredProducts]
+
+        .sort((a, b) => {
+
+          const dateA =
+            new Date(
+              b.launch_date || 0
+            );
+
+          const dateB =
+            new Date(
+              a.launch_date || 0
+            );
+
+          return (
+            dateA - dateB
+          );
+
+        })
+
+        .slice(0, 50);
+
+  } else {
+
+    /*
+    -----------------------------------
+    FILTER MODE
+    -----------------------------------
+    */
+
+    visibleProducts =
+      fullFilteredProducts;
+
+  }
 
   if (
     !visibleProducts.length
@@ -576,22 +639,15 @@ export function renderReversePricingReport(
 
   }
 
-  /*
-  -----------------------------------
-  TABLE DATA
-  -----------------------------------
-  */
-
   const tableRows =
     buildRows(
       visibleProducts,
-      filters,
-      false
+      filters
     );
 
   /*
   -----------------------------------
-  EXPORT BUTTON EVENT
+  EXPORT EVENT
   -----------------------------------
   */
 
@@ -606,7 +662,13 @@ export function renderReversePricingReport(
 
       exportBtn.addEventListener(
         'click',
-        exportReversePricing
+        () => {
+
+          exportReversePricing(
+            filters
+          );
+
+        }
       );
 
     }
@@ -645,6 +707,10 @@ export function renderReversePricingReport(
             <th>ARTICLE</th>
 
             <th>STATUS</th>
+
+            <th>LAUNCH DATE</th>
+
+            <th>LIVE DATE</th>
 
             <th>TP</th>
 
