@@ -2,6 +2,10 @@ import {
   appCache
 } from '../services/cacheService.js';
 
+import {
+  calculateSettlement
+} from '../engine/settlementCalculator.js';
+
 let uploadedRows = [];
 
 let processedRows = [];
@@ -656,74 +660,53 @@ export function initializeRecoReport() {
 
             try {
 
-              /*
-              -----------------------------------
-              TDS + TCS
-              -----------------------------------
-              */
+              const settlement =
+                calculateSettlement({
+
+                  brand:
+                    product.brand,
+
+                  articleType:
+                    product.article_type,
+
+                  sellingPrice:
+                    item.recommendedPrice,
+
+                  tp:
+                    Number(
+                      product.tp
+                    ),
+
+                  mrp:
+                    Number(
+                      product.mrp
+                    )
+
+                });
+
+              const uploadSettlement =
+                Number(
+                  item.settlementPrice || 0
+                );
 
               const tdsTcs =
                 (
-                  item.settlementPrice *
+                  uploadSettlement *
                   0.6
                 ) / 100;
 
-              /*
-              -----------------------------------
-              BANK SETTLEMENT
-              -----------------------------------
-              */
-
               const bankSettlement =
-                item.settlementPrice -
+                uploadSettlement -
                 tdsTcs;
 
-              /*
-              -----------------------------------
-              ROYALTY
-              -----------------------------------
-              */
-
               const royalty =
-                (
-                  item.recommendedPrice *
-
-                  Number(
-                    product.royalty_percent || 0
-                  )
-
-                ) / 100;
-
-              /*
-              -----------------------------------
-              MARKETING
-              -----------------------------------
-              */
+                settlement.royalty;
 
               const marketing =
-                (
-                  item.recommendedPrice *
-
-                  Number(
-                    product.marketing_percent || 0
-                  )
-
-                ) / 100;
-
-              /*
-              -----------------------------------
-              REBATE
-              -----------------------------------
-              */
+                settlement.marketing;
 
               const rebate =
                 0;
-
-              /*
-              -----------------------------------
-              PAYOUT BEFORE CODB
-              -----------------------------------
-              */
 
               const payoutBeforeCODB =
                 bankSettlement -
@@ -734,88 +717,31 @@ export function initializeRecoReport() {
 
                 rebate;
 
-              /*
-              -----------------------------------
-              DISPATCH COST
-              -----------------------------------
-              */
-
               const dispatchCost =
-                Number(
-                  product.dispatch_cost || 0
-                );
-
-              /*
-              -----------------------------------
-              RETURN CHARGE
-              -----------------------------------
-              */
+                settlement.dispatchCost;
 
               const returnCharge =
-                Number(
-                  product.return_charge || 0
-                );
-
-              /*
-              -----------------------------------
-              RETURN COST
-              -----------------------------------
-              */
+                settlement.baseReturnCost;
 
               const returnCost =
-                dispatchCost +
-                returnCharge;
-
-              /*
-              -----------------------------------
-              RTV CODB
-              -----------------------------------
-              */
+                settlement.returnCost;
 
               const returnCODB =
-                Number(
-                  product.rtv_codb || 0
-                );
-
-              /*
-              -----------------------------------
-              FINAL PAYOUT
-              -----------------------------------
-              */
+                settlement.rtvCodb;
 
               const payoutAfterCODB =
                 payoutBeforeCODB -
 
-                returnCost -
-
                 returnCODB;
-
-              /*
-              -----------------------------------
-              TP
-              -----------------------------------
-              */
 
               const tp =
                 Number(
                   product.tp || 0
                 );
 
-              /*
-              -----------------------------------
-              TP PROFIT RS
-              -----------------------------------
-              */
-
               const tpProfitRs =
                 payoutAfterCODB -
                 tp;
-
-              /*
-              -----------------------------------
-              TP PROFIT %
-              -----------------------------------
-              */
 
               const tpProfitPercent =
                 tp
@@ -827,24 +753,12 @@ export function initializeRecoReport() {
                     )
                   : 0;
 
-              /*
-              -----------------------------------
-              THRESHOLD
-              -----------------------------------
-              */
-
               const allowedLoss =
                 product.status ===
                 'CONTINUE'
 
                   ? -15
                   : -40;
-
-              /*
-              -----------------------------------
-              RECO STATUS
-              -----------------------------------
-              */
 
               const recoStatus =
                 tpProfitPercent >=
@@ -864,8 +778,7 @@ export function initializeRecoReport() {
                 recommendedPrice:
                   item.recommendedPrice,
 
-                uploadSettlement:
-                  item.settlementPrice,
+                uploadSettlement,
 
                 tdsTcs,
 
