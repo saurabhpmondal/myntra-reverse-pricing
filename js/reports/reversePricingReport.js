@@ -6,6 +6,20 @@ import {
   generatePricingLadder
 } from '../engine/pricingEngine.js';
 
+import {
+  exportToExcel
+} from '../utils/exportExcel.js';
+
+/* -----------------------------------
+EXPORT CACHE
+----------------------------------- */
+
+let currentExportRows = [];
+
+/* -----------------------------------
+FORMAT NUMBER
+----------------------------------- */
+
 function formatNumber(value) {
 
   return Number(
@@ -13,17 +27,28 @@ function formatNumber(value) {
   ).toLocaleString(
     'en-IN',
     {
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
     }
   );
+
 }
+
+/* -----------------------------------
+PROFIT CLASS
+----------------------------------- */
 
 function getProfitClass(value) {
 
   return value >= 0
     ? 'profit-positive'
     : 'profit-negative';
+
 }
+
+/* -----------------------------------
+FILTER PRODUCTS
+----------------------------------- */
 
 function filterProducts({
   brand,
@@ -88,6 +113,10 @@ function filterProducts({
 
 }
 
+/* -----------------------------------
+RULE SELECTION
+----------------------------------- */
+
 function getRuleForStatus(
   product,
   filters
@@ -109,7 +138,42 @@ function getRuleForStatus(
     filters.otherRule ||
     'TP'
   );
+
 }
+
+/* -----------------------------------
+EXPORT FUNCTION
+----------------------------------- */
+
+function exportReversePricing() {
+
+  if (
+    !currentExportRows.length
+  ) {
+
+    alert(
+      'No pricing rows available'
+    );
+
+    return;
+
+  }
+
+  exportToExcel({
+
+    fileName:
+      'reverse_pricing_export.xlsx',
+
+    rows:
+      currentExportRows
+
+  });
+
+}
+
+/* -----------------------------------
+BUILD ROWS
+----------------------------------- */
 
 function buildRows(
   products,
@@ -117,6 +181,8 @@ function buildRows(
 ) {
 
   const rows = [];
+
+  currentExportRows = [];
 
   products.forEach(product => {
 
@@ -161,6 +227,106 @@ function buildRows(
 
       const s =
         matchedRule.settlement;
+
+      /*
+      -----------------------------------
+      EXPORT DATA
+      -----------------------------------
+      */
+
+      currentExportRows.push({
+
+        'Style ID':
+          product.style_id,
+
+        'ERP SKU':
+          product.erp_sku,
+
+        Brand:
+          product.brand,
+
+        'Article Type':
+          product.article_type,
+
+        Status:
+          product.status,
+
+        TP:
+          Number(product.tp),
+
+        Rule:
+          matchedRule.pricingRule,
+
+        SP:
+          matchedRule.derivedSP,
+
+        MRP:
+          Number(product.mrp),
+
+        'TD %':
+          s.tradeDiscount,
+
+        GTA:
+          s.gtaCharge,
+
+        'Seller Price':
+          s.sellerPrice,
+
+        'Commission %':
+          s.commissionPercent,
+
+        'Commission Rs':
+          s.commissionRs,
+
+        'Fixed Fee':
+          s.fixedFee,
+
+        GST:
+          s.gstOnComAndFee,
+
+        'Upload Settlement':
+          s.uploadSettlement,
+
+        'TDS + TCS':
+          s.totalTaxDeduction,
+
+        'Bank Settlement':
+          s.bankSettlement,
+
+        Royalty:
+          s.royalty,
+
+        Marketing:
+          s.marketing,
+
+        'Payout Before CODB':
+          s.payoutBeforeCODB,
+
+        Dispatch:
+          s.dispatchCost,
+
+        'Return Cost':
+          s.returnCost,
+
+        'RTV CODB':
+          s.rtvCodb,
+
+        'Final Payout':
+          s.payoutAfterCODB,
+
+        'TP Profit Rs':
+          s.tpProfitRs,
+
+        'TP Profit %':
+          s.tpProfitPercent
+
+      });
+
+      /*
+      -----------------------------------
+      TABLE ROWS
+      -----------------------------------
+      */
 
       rows.push(`
 
@@ -290,6 +456,10 @@ function buildRows(
 
 }
 
+/* -----------------------------------
+RENDER REPORT
+----------------------------------- */
+
 export function renderReversePricingReport(
   filters
 ) {
@@ -320,7 +490,44 @@ export function renderReversePricingReport(
       filters
     );
 
+  /*
+  -----------------------------------
+  DELAY EXPORT BINDING
+  -----------------------------------
+  */
+
+  setTimeout(() => {
+
+    const exportBtn =
+      document.getElementById(
+        'exportReversePricing'
+      );
+
+    if (exportBtn) {
+
+      exportBtn.addEventListener(
+        'click',
+        exportReversePricing
+      );
+
+    }
+
+  }, 0);
+
   return `
+
+    <div class="report-actions-bar">
+
+      <button
+        class="tab-btn active"
+        id="exportReversePricing"
+      >
+
+        Export Pricing XLSX
+
+      </button>
+
+    </div>
 
     <div class="report-table-wrapper">
 
@@ -401,4 +608,5 @@ export function renderReversePricingReport(
     </div>
 
   `;
+
 }
