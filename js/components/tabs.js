@@ -108,6 +108,23 @@ export function renderTabs(
 
       </button>
 
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
+            'reco-engine'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="reco-engine"
+      >
+
+        Reco Engine
+
+      </button>
+
     </div>
 
   `;
