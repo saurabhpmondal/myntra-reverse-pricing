@@ -108,23 +108,6 @@ export function renderTabs(
 
       </button>
 
-      <button
-        class="
-          tab-btn
-          ${
-            activeTab ===
-            'export-center'
-              ? 'active'
-              : ''
-          }
-        "
-        data-tab="export-center"
-      >
-
-        Export Center
-
-      </button>
-
     </div>
 
   `;
