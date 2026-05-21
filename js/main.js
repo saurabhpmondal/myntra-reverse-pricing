@@ -155,7 +155,8 @@ function renderContent() {
       );
 
     initializeReversePricingGeneration(
-      renderContent
+      renderContent,
+      filters
     );
 
     return;
