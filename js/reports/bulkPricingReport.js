@@ -6,6 +6,10 @@ import {
   solveSellingPrice
 } from '../engine/reverseSolver.js';
 
+import {
+  exportToExcel
+} from '../utils/exportExcel.js';
+
 let uploadedRows = [];
 
 let processedRows = [];
@@ -19,11 +23,16 @@ function formatNumber(value) {
   ).toLocaleString(
     'en-IN',
     {
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
     }
   );
 
 }
+
+/* -----------------------------------
+DOWNLOAD SAMPLE FILE
+----------------------------------- */
 
 function downloadSampleFile() {
 
@@ -52,7 +61,119 @@ function downloadSampleFile() {
 
   link.click();
 
+  URL.revokeObjectURL(
+    url
+  );
+
 }
+
+/* -----------------------------------
+EXPORT SUCCESS
+----------------------------------- */
+
+function exportSuccessFile() {
+
+  if (
+    !processedRows.length
+  ) {
+    return;
+  }
+
+  exportToExcel({
+
+    fileName:
+      'bulk_pricing_output.xlsx',
+
+    rows:
+      processedRows.map(
+        row => ({
+
+          'Style ID':
+            row.styleId,
+
+          Brand:
+            row.brand,
+
+          'Article Type':
+            row.articleType,
+
+          TP:
+            row.tp,
+
+          'Margin %':
+            row.marginPercent,
+
+          'Derived SP':
+            row.sp,
+
+          'Upload Settlement':
+            row.uploadSettlement,
+
+          'Final Payout':
+            row.finalPayout,
+
+          'TP Profit Rs':
+            row.tpProfitRs,
+
+          'TP Profit %':
+            row.tpProfitPercent,
+
+          GTA:
+            row.gta,
+
+          'RTV CODB':
+            row.rtvCodb,
+
+          Status:
+            row.status
+
+        })
+      )
+
+  });
+
+}
+
+/* -----------------------------------
+EXPORT FAILED
+----------------------------------- */
+
+function exportErrorFile() {
+
+  if (
+    !failedRows.length
+  ) {
+    return;
+  }
+
+  exportToExcel({
+
+    fileName:
+      'bulk_pricing_errors.xlsx',
+
+    rows:
+      failedRows.map(
+        row => ({
+
+          'Style ID':
+            row.styleId,
+
+          Status:
+            row.status,
+
+          Reason:
+            row.reason
+
+        })
+      )
+
+  });
+
+}
+
+/* -----------------------------------
+KPI CARDS
+----------------------------------- */
 
 function renderKPICards({
   uploaded,
@@ -133,6 +254,10 @@ function renderKPICards({
   `;
 
 }
+
+/* -----------------------------------
+RESULT TABLE
+----------------------------------- */
 
 function renderResultTable(
   rows
@@ -254,6 +379,10 @@ function renderResultTable(
 
 }
 
+/* -----------------------------------
+RENDER
+----------------------------------- */
+
 export function renderBulkPricingReport() {
 
   return `
@@ -270,7 +399,7 @@ export function renderBulkPricingReport() {
 
         <div class="bulk-upload-title">
 
-          Upload CSV / XLSX File
+          Download sample file and upload CSV
 
         </div>
 
@@ -284,7 +413,7 @@ export function renderBulkPricingReport() {
         <input
           type="file"
           id="bulkPricingFile"
-          accept=".csv,.xlsx"
+          accept=".csv"
           style="
             margin-top:20px;
           "
@@ -379,6 +508,10 @@ export function renderBulkPricingReport() {
 
 }
 
+/* -----------------------------------
+INITIALIZE
+----------------------------------- */
+
 export function initializeBulkPricing() {
 
   const fileInput =
@@ -439,8 +572,12 @@ export function initializeBulkPricing() {
 
           appCache.productMaster.some(
             row =>
-              row.style_id ===
-              styleId
+              String(
+                row.style_id
+              ) ===
+              String(
+                styleId
+              )
           )
 
         ).length;
@@ -549,8 +686,12 @@ export function initializeBulkPricing() {
             const product =
               appCache.productMaster.find(
                 row =>
-                  row.style_id ===
-                  styleId
+                  String(
+                    row.style_id
+                  ) ===
+                  String(
+                    styleId
+                  )
               );
 
             if (!product) {
@@ -750,6 +891,36 @@ export function initializeBulkPricing() {
           </div>
 
         `;
+
+        /*
+        -----------------------------------
+        EXPORT EVENTS
+        -----------------------------------
+        */
+
+        document
+          .getElementById(
+            'exportSuccessFile'
+          )
+          .addEventListener(
+            'click',
+            exportSuccessFile
+          );
+
+        if (
+          failedRows.length
+        ) {
+
+          document
+            .getElementById(
+              'exportErrorFile'
+            )
+            .addEventListener(
+              'click',
+              exportErrorFile
+            );
+
+        }
 
       }, 400);
 
