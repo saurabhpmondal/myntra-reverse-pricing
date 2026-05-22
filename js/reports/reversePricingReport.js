@@ -43,112 +43,6 @@ export function resetReversePricingGeneration() {
 }
 
 /* -----------------------------------
-GET RULE
------------------------------------ */
-
-function getSelectedRule(row) {
-
-  return row.status === 'CONTINUE'
-
-    ? (
-        window.reversePricingFilters
-          ?.continueRule ||
-
-        'TP+5%'
-      )
-
-    : (
-        window.reversePricingFilters
-          ?.otherRule ||
-
-        'TP'
-      );
-
-}
-
-/* -----------------------------------
-GET PRICING DATA
------------------------------------ */
-
-function getPricingData(row) {
-
-  const selectedRule =
-    getSelectedRule(row);
-
-  const pricing =
-    row.pricing_data?.[
-      selectedRule
-    ] || {};
-
-  return {
-
-    selectedRule,
-
-    sp:
-      pricing.sp || 0,
-
-    trade_discount:
-      pricing.trade_discount || 0,
-
-    gta:
-      pricing.gta || 0,
-
-    seller_price:
-      pricing.seller_price || 0,
-
-    commission_percent:
-      pricing.commission_percent || 0,
-
-    commission_rs:
-      pricing.commission_rs || 0,
-
-    fixed_fee:
-      pricing.fixed_fee || 0,
-
-    gst:
-      pricing.gst || 0,
-
-    upload_settlement:
-      pricing.upload_settlement || 0,
-
-    tds_tcs:
-      pricing.tds_tcs || 0,
-
-    bank_settlement:
-      pricing.bank_settlement || 0,
-
-    royalty:
-      pricing.royalty || 0,
-
-    marketing:
-      pricing.marketing || 0,
-
-    payout_before_codb:
-      pricing.payout_before_codb || 0,
-
-    dispatch_cost:
-      pricing.dispatch_cost || 0,
-
-    return_cost:
-      pricing.return_cost || 0,
-
-    rtv_codb:
-      pricing.rtv_codb || 0,
-
-    final_payout:
-      pricing.final_payout || 0,
-
-    tp_profit_rs:
-      pricing.tp_profit_rs || 0,
-
-    tp_profit_percent:
-      pricing.tp_profit_percent || 0
-
-  };
-
-}
-
-/* -----------------------------------
 EXPORT
 ----------------------------------- */
 
@@ -202,9 +96,6 @@ async function exportReversePricing() {
     const row =
       currentRows[i];
 
-    const pricing =
-      getPricingData(row);
-
     exportRows.push({
 
       'Style ID':
@@ -226,67 +117,67 @@ async function exportReversePricing() {
         row.mrp,
 
       Rule:
-        pricing.selectedRule,
+        row.selectedRule,
 
       SP:
-        pricing.sp,
+        row.sp,
 
       'Trade Discount':
-        pricing.trade_discount,
+        row.trade_discount,
 
       GTA:
-        pricing.gta,
+        row.gta,
 
       'Seller Price':
-        pricing.seller_price,
+        row.seller_price,
 
       'Commission %':
-        pricing.commission_percent,
+        row.commission_percent,
 
       'Commission Rs':
-        pricing.commission_rs,
+        row.commission_rs,
 
       'Fixed Fee':
-        pricing.fixed_fee,
+        row.fixed_fee,
 
       GST:
-        pricing.gst,
+        row.gst,
 
       'Upload Settlement':
-        pricing.upload_settlement,
+        row.upload_settlement,
 
       'TDS + TCS':
-        pricing.tds_tcs,
+        row.tds_tcs,
 
       'Bank Settlement':
-        pricing.bank_settlement,
+        row.bank_settlement,
 
       Royalty:
-        pricing.royalty,
+        row.royalty,
 
       Marketing:
-        pricing.marketing,
+        row.marketing,
 
       'Payout Before CODB':
-        pricing.payout_before_codb,
+        row.payout_before_codb,
 
       'Dispatch Cost':
-        pricing.dispatch_cost,
+        row.dispatch_cost,
 
       'Return Cost':
-        pricing.return_cost,
+        row.return_cost,
 
       'RTV CODB':
-        pricing.rtv_codb,
+        row.rtv_codb,
 
       'Final Payout':
-        pricing.final_payout,
+        row.final_payout,
 
       'TP Profit Rs':
-        pricing.tp_profit_rs,
+        row.tp_profit_rs,
 
       'TP Profit %':
-        pricing.tp_profit_percent
+        row.tp_profit_percent
 
     });
 
@@ -359,74 +250,67 @@ function renderTableRows(
   rows
 ) {
 
-  return rows.map(row => {
+  return rows.map(row => `
 
-    const pricing =
-      getPricingData(row);
+    <tr>
 
-    return `
+      <td>${row.style_id}</td>
 
-      <tr>
+      <td>${row.brand}</td>
 
-        <td>${row.style_id}</td>
+      <td>${row.article_type}</td>
 
-        <td>${row.brand}</td>
+      <td>${row.status}</td>
 
-        <td>${row.article_type}</td>
+      <td>${formatNumber(row.tp)}</td>
 
-        <td>${row.status}</td>
+      <td>${formatNumber(row.mrp)}</td>
 
-        <td>${formatNumber(row.tp)}</td>
+      <td>${row.selectedRule}</td>
 
-        <td>${formatNumber(row.mrp)}</td>
+      <td>${formatNumber(row.sp)}</td>
 
-        <td>${pricing.selectedRule}</td>
+      <td>${formatNumber(row.trade_discount)}%</td>
 
-        <td>${formatNumber(pricing.sp)}</td>
+      <td>${formatNumber(row.gta)}</td>
 
-        <td>${formatNumber(pricing.trade_discount)}%</td>
+      <td>${formatNumber(row.seller_price)}</td>
 
-        <td>${formatNumber(pricing.gta)}</td>
+      <td>${formatNumber(row.commission_percent)}%</td>
 
-        <td>${formatNumber(pricing.seller_price)}</td>
+      <td>${formatNumber(row.commission_rs)}</td>
 
-        <td>${formatNumber(pricing.commission_percent)}%</td>
+      <td>${formatNumber(row.fixed_fee)}</td>
 
-        <td>${formatNumber(pricing.commission_rs)}</td>
+      <td>${formatNumber(row.gst)}</td>
 
-        <td>${formatNumber(pricing.fixed_fee)}</td>
+      <td>${formatNumber(row.upload_settlement)}</td>
 
-        <td>${formatNumber(pricing.gst)}</td>
+      <td>${formatNumber(row.tds_tcs)}</td>
 
-        <td>${formatNumber(pricing.upload_settlement)}</td>
+      <td>${formatNumber(row.bank_settlement)}</td>
 
-        <td>${formatNumber(pricing.tds_tcs)}</td>
+      <td>${formatNumber(row.royalty)}</td>
 
-        <td>${formatNumber(pricing.bank_settlement)}</td>
+      <td>${formatNumber(row.marketing)}</td>
 
-        <td>${formatNumber(pricing.royalty)}</td>
+      <td>${formatNumber(row.payout_before_codb)}</td>
 
-        <td>${formatNumber(pricing.marketing)}</td>
+      <td>${formatNumber(row.dispatch_cost)}</td>
 
-        <td>${formatNumber(pricing.payout_before_codb)}</td>
+      <td>${formatNumber(row.return_cost)}</td>
 
-        <td>${formatNumber(pricing.dispatch_cost)}</td>
+      <td>${formatNumber(row.rtv_codb)}</td>
 
-        <td>${formatNumber(pricing.return_cost)}</td>
+      <td>${formatNumber(row.final_payout)}</td>
 
-        <td>${formatNumber(pricing.rtv_codb)}</td>
+      <td>${formatNumber(row.tp_profit_rs)}</td>
 
-        <td>${formatNumber(pricing.final_payout)}</td>
+      <td>${formatNumber(row.tp_profit_percent)}%</td>
 
-        <td>${formatNumber(pricing.tp_profit_rs)}</td>
+    </tr>
 
-        <td>${formatNumber(pricing.tp_profit_percent)}%</td>
-
-      </tr>
-
-    `;
-
-  }).join('');
+  `).join('');
 
 }
 
@@ -675,9 +559,6 @@ export async function initializeReversePricingGeneration(
   renderContent,
   filters
 ) {
-
-  window.reversePricingFilters =
-    filters;
 
   currentPage = 0;
 
