@@ -1,23 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-import {
-  generatePricingLadder
-} from '../js/engine/pricingEngine.js';
-
 /* -----------------------------------
 SUPABASE
 ----------------------------------- */
 
-const supabaseUrl =
-  process.env.SUPABASE_URL;
-
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 const supabase =
   createClient(
-    supabaseUrl,
-    supabaseKey
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      realtime: {
+        enabled: false
+      }
+    }
   );
 
 /* -----------------------------------
@@ -26,38 +21,384 @@ RULES
 
 const CONTINUE_RULES = [
 
-  'TP',
-  'TP+5%',
-  'TP+10%',
-  'TP-5%',
-  'TP-10%',
-  'TP-15%'
+  {
+    name: 'TP',
+    margin: 0
+  },
+
+  {
+    name: 'TP+5%',
+    margin: 5
+  },
+
+  {
+    name: 'TP+10%',
+    margin: 10
+  },
+
+  {
+    name: 'TP-5%',
+    margin: -5
+  },
+
+  {
+    name: 'TP-10%',
+    margin: -10
+  },
+
+  {
+    name: 'TP-15%',
+    margin: -15
+  }
 
 ];
 
 const OTHER_RULES = [
 
-  'TP',
-  'TP+5%',
-  'TP+10%',
-  'TP-5%',
-  'TP-10%',
-  'TP-15%',
-  'TP-20%',
-  'TP-25%',
-  'TP-30%',
-  'TP-35%',
-  'TP-40%'
+  {
+    name: 'TP',
+    margin: 0
+  },
+
+  {
+    name: 'TP+5%',
+    margin: 5
+  },
+
+  {
+    name: 'TP+10%',
+    margin: 10
+  },
+
+  {
+    name: 'TP-5%',
+    margin: -5
+  },
+
+  {
+    name: 'TP-10%',
+    margin: -10
+  },
+
+  {
+    name: 'TP-15%',
+    margin: -15
+  },
+
+  {
+    name: 'TP-20%',
+    margin: -20
+  },
+
+  {
+    name: 'TP-25%',
+    margin: -25
+  },
+
+  {
+    name: 'TP-30%',
+    margin: -30
+  },
+
+  {
+    name: 'TP-35%',
+    margin: -35
+  },
+
+  {
+    name: 'TP-40%',
+    margin: -40
+  }
 
 ];
+
+/* -----------------------------------
+HELPERS
+----------------------------------- */
+
+function round(value) {
+
+  return Number(
+    Number(value || 0)
+      .toFixed(2)
+  );
+
+}
+
+/* -----------------------------------
+GET COMMERCIAL
+----------------------------------- */
+
+function getCommercialRow({
+  commercials,
+  brand,
+  articleType,
+  sellingPrice
+}) {
+
+  return commercials.find(row =>
+
+    row.brand === brand &&
+
+    row.article_type === articleType &&
+
+    Number(sellingPrice) >=
+    Number(row.lower_limit) &&
+
+    Number(sellingPrice) <=
+    Number(row.upper_limit)
+
+  );
+
+}
+
+/* -----------------------------------
+GET GTA
+----------------------------------- */
+
+function getGTARow({
+  gtaRows,
+  brand,
+  articleType,
+  sellingPrice
+}) {
+
+  return gtaRows.find(row =>
+
+    row.brand === brand &&
+
+    row.article_type === articleType &&
+
+    Number(sellingPrice) >=
+    Number(row.lower_limit) &&
+
+    Number(sellingPrice) <=
+    Number(row.upper_limit)
+
+  );
+
+}
+
+/* -----------------------------------
+CALCULATE SETTLEMENT
+----------------------------------- */
+
+function calculateSettlement({
+  product,
+  sellingPrice,
+  commercial,
+  gta
+}) {
+
+  const tp =
+    Number(product.tp);
+
+  const mrp =
+    Number(product.mrp);
+
+  const tradeDiscount =
+    round(
+      (
+        (
+          mrp - sellingPrice
+        ) / mrp
+      ) * 100
+    );
+
+  const gtaCharge =
+    round(
+      gta?.gta_charges || 0
+    );
+
+  const sellerPrice =
+    round(
+      sellingPrice - gtaCharge
+    );
+
+  const commissionPercent =
+    round(
+      commercial.commission
+    );
+
+  const commissionRs =
+    round(
+      (
+        sellerPrice *
+        commissionPercent
+      ) / 100
+    );
+
+  const fixedFee =
+    round(
+      commercial.fixed_fee
+    );
+
+  const gst =
+    round(
+      (
+        commissionRs +
+        fixedFee
+      ) * 0.18
+    );
+
+  const uploadSettlement =
+    round(
+      sellerPrice -
+      commissionRs -
+      fixedFee -
+      gst
+    );
+
+  const tdsTcs =
+    round(
+      uploadSettlement *
+      0.011
+    );
+
+  const bankSettlement =
+    round(
+      uploadSettlement -
+      tdsTcs
+    );
+
+  const royalty =
+    round(
+      commercial.royalty || 0
+    );
+
+  const marketing =
+    round(
+      commercial.marketing || 0
+    );
+
+  const payoutBeforeCODB =
+    round(
+      bankSettlement -
+      royalty -
+      marketing
+    );
+
+  const dispatchCost =
+    round(
+      commercial.pick_and_pack || 0
+    );
+
+  const returnCost =
+    round(
+      commercial.return_fee || 0
+    );
+
+  const rtvCodb =
+    round(
+      dispatchCost +
+      returnCost
+    );
+
+  const finalPayout =
+    round(
+      payoutBeforeCODB -
+      rtvCodb
+    );
+
+  const tpProfitRs =
+    round(
+      finalPayout - tp
+    );
+
+  const tpProfitPercent =
+    round(
+      (
+        tpProfitRs / tp
+      ) * 100
+    );
+
+  return {
+
+    tradeDiscount,
+    gtaCharge,
+    sellerPrice,
+    commissionPercent,
+    commissionRs,
+    fixedFee,
+    gst,
+    uploadSettlement,
+    tdsTcs,
+    bankSettlement,
+    royalty,
+    marketing,
+    payoutBeforeCODB,
+    dispatchCost,
+    returnCost,
+    rtvCodb,
+    finalPayout,
+    tpProfitRs,
+    tpProfitPercent
+
+  };
+
+}
+
+/* -----------------------------------
+SOLVE SP
+----------------------------------- */
+
+function solveSellingPrice({
+  targetPayout,
+  product,
+  commercial,
+  gta
+}) {
+
+  let sp =
+    Number(product.tp);
+
+  for (
+    let i = 0;
+    i < 1000;
+    i++
+  ) {
+
+    const settlement =
+      calculateSettlement({
+
+        product,
+        sellingPrice: sp,
+        commercial,
+        gta
+
+      });
+
+    if (
+      settlement.finalPayout >=
+      targetPayout
+    ) {
+
+      return {
+
+        sellingPrice: round(sp),
+        settlement
+
+      };
+
+    }
+
+    sp += 1;
+
+  }
+
+  return null;
+
+}
 
 /* -----------------------------------
 BUILD PRICING JSON
 ----------------------------------- */
 
-function buildPricingJSON(
-  product
-) {
+function buildPricingJSON({
+  product,
+  commercials,
+  gtaRows
+}) {
 
   const pricingData = {};
 
@@ -68,121 +409,94 @@ function buildPricingJSON(
       ? CONTINUE_RULES
       : OTHER_RULES;
 
-  try {
+  rules.forEach(rule => {
 
-    const ladder =
-      generatePricingLadder({
+    const targetPayout =
+      Number(product.tp) *
 
+      (
+        1 +
+        (
+          rule.margin / 100
+        )
+      );
+
+    const commercial =
+      getCommercialRow({
+
+        commercials,
         brand:
           product.brand,
 
         articleType:
           product.article_type,
 
-        status:
-          product.status,
-
-        tp:
-          Number(
-            product.tp
-          ),
-
-        mrp:
-          Number(
-            product.mrp
-          )
+        sellingPrice:
+          product.mrp
 
       });
 
-    rules.forEach(rule => {
+    const gta =
+      getGTARow({
 
-      const matched =
-        ladder.find(
-          item =>
-            item.pricingRule ===
-            rule
-        );
+        gtaRows,
+        brand:
+          product.brand,
 
-      if (!matched) {
-        return;
-      }
+        articleType:
+          product.article_type,
 
-      const s =
-        matched.settlement;
+        sellingPrice:
+          product.mrp
 
-      pricingData[rule] = {
+      });
 
-        sp:
-          matched.derivedSP,
+    if (!commercial) {
 
-        trade_discount:
-          s.tradeDiscount,
+      console.log(
+        `COMMERCIAL NOT FOUND: ${product.brand}`
+      );
 
-        gta:
-          s.gtaCharge,
+      return;
 
-        seller_price:
-          s.sellerPrice,
+    }
 
-        commission_percent:
-          s.commissionPercent,
+    if (!gta) {
 
-        commission_rs:
-          s.commissionRs,
+      console.log(
+        `GTA NOT FOUND: ${product.brand}`
+      );
 
-        fixed_fee:
-          s.fixedFee,
+      return;
 
-        gst:
-          s.gstOnComAndFee,
+    }
 
-        upload_settlement:
-          s.uploadSettlement,
+    const solved =
+      solveSellingPrice({
 
-        tds_tcs:
-          s.totalTaxDeduction,
+        targetPayout,
+        product,
+        commercial,
+        gta
 
-        bank_settlement:
-          s.bankSettlement,
+      });
 
-        royalty:
-          s.royalty,
+    if (!solved) {
+      return;
+    }
 
-        marketing:
-          s.marketing,
+    pricingData[
+      rule.name
+    ] = {
 
-        payout_before_codb:
-          s.payoutBeforeCODB,
+      sp:
+        solved.sellingPrice,
 
-        dispatch_cost:
-          s.dispatchCost,
+      ...solved.settlement
 
-        return_cost:
-          s.returnCost,
+    };
 
-        rtv_codb:
-          s.rtvCodb,
-
-        final_payout:
-          s.payoutAfterCODB,
-
-        tp_profit_rs:
-          s.tpProfitRs,
-
-        tp_profit_percent:
-          s.tpProfitPercent
-
-      };
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      `Pricing failed for style ${product.style_id}`
-    );
-
-  }
+  });
 
   return pricingData;
 
@@ -195,74 +509,47 @@ MAIN
 async function buildReversePricingCache() {
 
   console.log(
-    '\nStarting Reverse Pricing Cache Build...\n'
+    '\nLoading masters...\n'
   );
 
-  /*
-  -----------------------------------
-  FETCH PRODUCT MASTER
-  -----------------------------------
-  */
-
   const {
-    data: products,
-    error: productError
+    data: products
   } = await supabase
     .from('product_master')
     .select('*');
 
-  if (productError) {
+  const {
+    data: commercials
+  } = await supabase
+    .from('commercials_master')
+    .select('*');
 
-    console.error(
-      'Product fetch failed:',
-      productError
-    );
-
-    return;
-
-  }
+  const {
+    data: gtaRows
+  } = await supabase
+    .from('gta_master')
+    .select('*');
 
   console.log(
-    `Products Loaded: ${products.length}`
+    `Products: ${products.length}`
   );
 
-  /*
-  -----------------------------------
-  CLEAR OLD CACHE
-  -----------------------------------
-  */
+  console.log(
+    `Commercials: ${commercials.length}`
+  );
+
+  console.log(
+    `GTA: ${gtaRows.length}`
+  );
 
   console.log(
     '\nClearing old cache...\n'
   );
 
-  const {
-    error: deleteError
-  } = await supabase
+  await supabase
     .from('reverse_pricing_cache')
     .delete()
     .neq('id', 0);
-
-  if (deleteError) {
-
-    console.error(
-      'Cache clear failed:',
-      deleteError
-    );
-
-    return;
-
-  }
-
-  console.log(
-    'Old cache cleared successfully.'
-  );
-
-  /*
-  -----------------------------------
-  BUILD CACHE ROWS
-  -----------------------------------
-  */
 
   const rows = [];
 
@@ -271,9 +558,13 @@ async function buildReversePricingCache() {
   products.forEach(product => {
 
     const pricingData =
-      buildPricingJSON(
-        product
-      );
+      buildPricingJSON({
+
+        product,
+        commercials,
+        gtaRows
+
+      });
 
     rows.push({
 
@@ -328,14 +619,8 @@ async function buildReversePricingCache() {
   });
 
   console.log(
-    `\nRows Prepared: ${rows.length}\n`
+    '\nStarting insert...\n'
   );
-
-  /*
-  -----------------------------------
-  BATCH INSERT
-  -----------------------------------
-  */
 
   const batchSize = 500;
 
@@ -361,10 +646,7 @@ async function buildReversePricingCache() {
 
     if (error) {
 
-      console.error(
-        `Batch failed at ${i}`,
-        error
-      );
+      console.log(error);
 
       continue;
 
@@ -372,23 +654,21 @@ async function buildReversePricingCache() {
 
     console.log(
 
-      `Inserted ${Math.min(
-        i + batchSize,
-        rows.length
-      )} / ${rows.length}`
+      `Inserted ${
+        Math.min(
+          i + batchSize,
+          rows.length
+        )
+      } / ${rows.length}`
 
     );
 
   }
 
   console.log(
-    '\nReverse Pricing Cache Build Completed.\n'
+    '\nCACHE BUILD COMPLETE\n'
   );
 
 }
-
-/* -----------------------------------
-RUN
------------------------------------ */
 
 buildReversePricingCache();
