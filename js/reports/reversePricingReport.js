@@ -1,14 +1,20 @@
 import {
-  filterReversePricingCache,
-  getReversePricingRuleData,
-  loadReversePricingCache
+  appCache
+} from '../services/cacheService.js';
+
+import {
+  getReversePricingData
 } from '../services/reversePricingCacheService.js';
 
-let reversePricingGenerated =
-  false;
+import {
+  exportToExcel
+} from '../utils/exportExcel.js';
 
-let reversePricingLoading =
-  false;
+let currentRows = [];
+
+let renderedCount = 100;
+
+let isExporting = false;
 
 /* -----------------------------------
 FORMAT
@@ -21,434 +27,8 @@ function formatNumber(value) {
   ).toLocaleString(
     'en-IN',
     {
-      maximumFractionDigits: 2
-    }
-  );
-
-}
-
-/* -----------------------------------
-PROFIT CLASS
------------------------------------ */
-
-function getProfitClass(value) {
-
-  return value >= 0
-    ? 'profit-positive'
-    : 'profit-negative';
-
-}
-
-/* -----------------------------------
-RULE
------------------------------------ */
-
-function getRuleForStatus(
-  row,
-  filters
-) {
-
-  if (
-    row.status ===
-    'CONTINUE'
-  ) {
-
-    return (
-      filters.continueRule ||
-      'TP+5%'
-    );
-
-  }
-
-  return (
-    filters.otherRule ||
-    'TP'
-  );
-
-}
-
-/* -----------------------------------
-BUILD TABLE ROWS
------------------------------------ */
-
-function buildRows(
-  rows,
-  filters
-) {
-
-  return rows.map(row => {
-
-    const selectedRule =
-      getRuleForStatus(
-        row,
-        filters
-      );
-
-    const pricing =
-      getReversePricingRuleData(
-        row,
-        selectedRule
-      );
-
-    if (!pricing) {
-      return '';
-    }
-
-    return `
-
-      <tr>
-
-        <td>${row.style_id}</td>
-
-        <td>${row.erp_sku}</td>
-
-        <td>${row.brand}</td>
-
-        <td>${row.article_type}</td>
-
-        <td>${row.status}</td>
-
-        <td>${row.launch_date || '-'}</td>
-
-        <td>${row.live_date || '-'}</td>
-
-        <td>${formatNumber(row.tp)}</td>
-
-        <td>${selectedRule}</td>
-
-        <td>${formatNumber(
-          pricing.sp
-        )}</td>
-
-        <td>${formatNumber(
-          row.mrp
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.tradeDiscount
-        )}%</td>
-
-        <td>${formatNumber(
-          pricing.gtaCharge
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.sellerPrice
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.commissionPercent
-        )}%</td>
-
-        <td>${formatNumber(
-          pricing.commissionRs
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.fixedFee
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.gst
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.uploadSettlement
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.tdsTcs
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.bankSettlement
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.royalty
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.marketing
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.payoutBeforeCODB
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.dispatchCost
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.returnCost
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.rtvCodb
-        )}</td>
-
-        <td>${formatNumber(
-          pricing.finalPayout
-        )}</td>
-
-        <td class="${getProfitClass(
-          pricing.tpProfitRs
-        )}">
-
-          ${formatNumber(
-            pricing.tpProfitRs
-          )}
-
-        </td>
-
-        <td class="${getProfitClass(
-          pricing.tpProfitPercent
-        )}">
-
-          ${formatNumber(
-            pricing.tpProfitPercent
-          )}%
-
-        </td>
-
-      </tr>
-
-    `;
-
-  }).join('');
-
-}
-
-/* -----------------------------------
-TABLE
------------------------------------ */
-
-function renderTable(
-  rows,
-  filters
-) {
-
-  return `
-
-    <div class="report-table-wrapper">
-
-      <table class="report-table">
-
-        <thead>
-
-          <tr>
-
-            <th>STYLE ID</th>
-            <th>ERP SKU</th>
-            <th>BRAND</th>
-            <th>ARTICLE</th>
-            <th>STATUS</th>
-            <th>LAUNCH DATE</th>
-            <th>LIVE DATE</th>
-            <th>TP</th>
-            <th>RULE</th>
-            <th>SP</th>
-            <th>MRP</th>
-            <th>TD %</th>
-            <th>GTA</th>
-            <th>SP1</th>
-            <th>COM %</th>
-            <th>COM RS</th>
-            <th>FIXED FEE</th>
-            <th>GST</th>
-            <th>US</th>
-            <th>TDS+TCS</th>
-            <th>BANK</th>
-            <th>ROYALTY</th>
-            <th>MARKETING</th>
-            <th>PB CODB</th>
-            <th>DISPATCH</th>
-            <th>RETURN COST</th>
-            <th>RTV CODB</th>
-            <th>FINAL PAYOUT</th>
-            <th>TP PROFIT RS</th>
-            <th>TP PROFIT %</th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          ${buildRows(
-            rows,
-            filters
-          )}
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-  `;
-
-}
-
-/* -----------------------------------
-RENDER
------------------------------------ */
-
-export function renderReversePricingReport(
-  filters
-) {
-
-  if (
-    !reversePricingGenerated
-  ) {
-
-    return `
-
-      <div class="empty-state">
-
-        <div
-          style="
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:16px;
-            padding:60px 20px;
-          "
-        >
-
-          <div
-            style="
-              font-size:18px;
-              font-weight:600;
-            "
-          >
-
-            Reverse Pricing Cache Ready
-
-          </div>
-
-          <div
-            style="
-              color:#777;
-              text-align:center;
-              max-width:420px;
-              line-height:1.6;
-            "
-          >
-
-            Pricing is now loaded from prebuilt cache for ultra fast performance.
-
-          </div>
-
-          <button
-            class="tab-btn active"
-            id="generateReversePricingBtn"
-            style="
-              min-width:220px;
-              height:48px;
-            "
-          >
-
-            Load Pricing
-
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-  if (
-    reversePricingLoading
-  ) {
-
-    return `
-
-      <div class="bulk-processing-loader">
-
-        <div class="bulk-processing-spinner">
-
-        </div>
-
-        <div>
-
-          Loading reverse pricing cache...
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-  const filteredRows =
-    filterReversePricingCache(
-      filters
-    );
-
-  if (!filteredRows.length) {
-
-    return `
-
-      <div class="empty-state">
-
-        No products found
-
-      </div>
-
-    `;
-
-  }
-
-  return renderTable(
-    filteredRows.slice(0, 100),
-    filters
-  );
-
-}
-
-/* -----------------------------------
-INITIALIZE
------------------------------------ */
-
-export function initializeReversePricingGeneration(
-  renderCallback
-) {
-
-  const button =
-    document.getElementById(
-      'generateReversePricingBtn'
-    );
-
-  if (!button) {
-    return;
-  }
-
-  button.addEventListener(
-    'click',
-    async () => {
-
-      reversePricingGenerated =
-        true;
-
-      reversePricingLoading =
-        true;
-
-      renderCallback();
-
-      await loadReversePricingCache();
-
-      reversePricingLoading =
-        false;
-
-      renderCallback();
-
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2
     }
   );
 
@@ -460,7 +40,572 @@ RESET
 
 export function resetReversePricingGeneration() {
 
-  reversePricingGenerated =
-    false;
+  currentRows = [];
+
+  renderedCount = 100;
+
+}
+
+/* -----------------------------------
+EXPORT
+----------------------------------- */
+
+async function exportReversePricing() {
+
+  if (
+    isExporting
+  ) {
+    return;
+  }
+
+  isExporting = true;
+
+  const exportBtn =
+    document.getElementById(
+      'reversePricingExportBtn'
+    );
+
+  const progressBar =
+    document.getElementById(
+      'reversePricingExportProgress'
+    );
+
+  const progressText =
+    document.getElementById(
+      'reversePricingExportText'
+    );
+
+  if (exportBtn) {
+
+    exportBtn.disabled = true;
+
+    exportBtn.innerText =
+      'Preparing Export...';
+
+  }
+
+  if (progressBar) {
+
+    progressBar.style.display =
+      'block';
+
+  }
+
+  const exportRows = [];
+
+  const total =
+    currentRows.length;
+
+  for (
+    let i = 0;
+    i < total;
+    i++
+  ) {
+
+    const row =
+      currentRows[i];
+
+    exportRows.push({
+
+      'Style ID':
+        row.style_id,
+
+      Brand:
+        row.brand,
+
+      'Article Type':
+        row.article_type,
+
+      Status:
+        row.status,
+
+      TP:
+        row.tp,
+
+      MRP:
+        row.mrp,
+
+      Rule:
+        row.selectedRule,
+
+      SP:
+        row.sp,
+
+      'Trade Discount':
+        row.trade_discount,
+
+      GTA:
+        row.gta,
+
+      'Seller Price':
+        row.seller_price,
+
+      'Commission %':
+        row.commission_percent,
+
+      'Commission Rs':
+        row.commission_rs,
+
+      'Fixed Fee':
+        row.fixed_fee,
+
+      GST:
+        row.gst,
+
+      'Upload Settlement':
+        row.upload_settlement,
+
+      'TDS + TCS':
+        row.tds_tcs,
+
+      'Bank Settlement':
+        row.bank_settlement,
+
+      Royalty:
+        row.royalty,
+
+      Marketing:
+        row.marketing,
+
+      'Payout Before CODB':
+        row.payout_before_codb,
+
+      'Dispatch Cost':
+        row.dispatch_cost,
+
+      'Return Cost':
+        row.return_cost,
+
+      'RTV CODB':
+        row.rtv_codb,
+
+      'Final Payout':
+        row.final_payout,
+
+      'TP Profit Rs':
+        row.tp_profit_rs,
+
+      'TP Profit %':
+        row.tp_profit_percent
+
+    });
+
+    /*
+    -----------------------------------
+    PROGRESS
+    -----------------------------------
+    */
+
+    if (
+      i % 100 === 0
+    ) {
+
+      const progress =
+        Math.round(
+          (
+            (i + 1) /
+            total
+          ) * 100
+        );
+
+      if (progressText) {
+
+        progressText.innerText =
+          `Preparing Export ${progress}%`;
+
+      }
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            0
+          )
+      );
+
+    }
+
+  }
+
+  exportToExcel({
+
+    fileName:
+      'reverse_pricing_export.xlsx',
+
+    rows:
+      exportRows
+
+  });
+
+  if (exportBtn) {
+
+    exportBtn.disabled = false;
+
+    exportBtn.innerText =
+      'Export XLSX';
+
+  }
+
+  if (progressText) {
+
+    progressText.innerText =
+      'Export Completed';
+
+  }
+
+  isExporting = false;
+
+}
+
+/* -----------------------------------
+TABLE
+----------------------------------- */
+
+function renderTableRows(
+  rows
+) {
+
+  return rows.map(row => `
+
+    <tr>
+
+      <td>
+        ${row.style_id}
+      </td>
+
+      <td>
+        ${row.brand}
+      </td>
+
+      <td>
+        ${row.article_type}
+      </td>
+
+      <td>
+        ${row.status}
+      </td>
+
+      <td>
+        ${formatNumber(
+          row.tp
+        )}
+      </td>
+
+      <td>
+        ${row.selectedRule}
+      </td>
+
+      <td>
+        ${formatNumber(
+          row.sp
+        )}
+      </td>
+
+      <td>
+        ${formatNumber(
+          row.final_payout
+        )}
+      </td>
+
+      <td>
+        ${formatNumber(
+          row.tp_profit_rs
+        )}
+      </td>
+
+      <td>
+        ${formatNumber(
+          row.tp_profit_percent
+        )}%
+      </td>
+
+    </tr>
+
+  `).join('');
+
+}
+
+/* -----------------------------------
+LOAD MORE
+----------------------------------- */
+
+function initializeLoadMore() {
+
+  const btn =
+    document.getElementById(
+      'loadMoreReversePricing'
+    );
+
+  if (!btn) {
+    return;
+  }
+
+  btn.addEventListener(
+    'click',
+    () => {
+
+      renderedCount += 100;
+
+      renderReversePricingRows();
+
+    }
+  );
+
+}
+
+/* -----------------------------------
+RENDER ROWS
+----------------------------------- */
+
+function renderReversePricingRows() {
+
+  const tbody =
+    document.getElementById(
+      'reversePricingTableBody'
+    );
+
+  const loadMoreArea =
+    document.getElementById(
+      'loadMoreArea'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  tbody.innerHTML =
+    renderTableRows(
+
+      currentRows.slice(
+        0,
+        renderedCount
+      )
+
+    );
+
+  /*
+  -----------------------------------
+  LOAD MORE
+  -----------------------------------
+  */
+
+  if (
+    currentRows.length >
+    renderedCount
+  ) {
+
+    loadMoreArea.innerHTML = `
+
+      <button
+        class="tab-btn"
+        id="loadMoreReversePricing"
+      >
+
+        Load More
+
+      </button>
+
+    `;
+
+    initializeLoadMore();
+
+  } else {
+
+    loadMoreArea.innerHTML = '';
+
+  }
+
+}
+
+/* -----------------------------------
+REPORT
+----------------------------------- */
+
+export function renderReversePricingReport() {
+
+  return `
+
+    <div class="report-section">
+
+      <div
+        class="bulk-export-bar"
+        style="
+          margin-bottom:20px;
+        "
+      >
+
+        <button
+          class="tab-btn active"
+          id="reversePricingExportBtn"
+        >
+
+          Export XLSX
+
+        </button>
+
+      </div>
+
+      <div
+        id="reversePricingExportProgress"
+        style="
+          display:none;
+          margin-bottom:20px;
+        "
+      >
+
+        <div
+          id="reversePricingExportText"
+          class="summary-title"
+        >
+
+          Preparing Export...
+
+        </div>
+
+      </div>
+
+      <div class="brand-table-wrapper">
+
+        <table class="brand-table">
+
+          <thead>
+
+            <tr>
+
+              <th>Style ID</th>
+              <th>Brand</th>
+              <th>Article Type</th>
+              <th>Status</th>
+              <th>TP</th>
+              <th>Rule</th>
+              <th>SP</th>
+              <th>Final Payout</th>
+              <th>TP Profit Rs</th>
+              <th>TP Profit %</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody
+            id="reversePricingTableBody"
+          >
+
+            <tr>
+
+              <td colspan="10">
+
+                Loading Pricing...
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <div
+        id="loadMoreArea"
+        style="
+          margin-top:24px;
+          text-align:center;
+        "
+      >
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+/* -----------------------------------
+INITIALIZE
+----------------------------------- */
+
+export async function initializeReversePricingGeneration(
+  renderContent,
+  filters
+) {
+
+  const tbody =
+    document.getElementById(
+      'reversePricingTableBody'
+    );
+
+  /*
+  -----------------------------------
+  LOAD CACHE
+  -----------------------------------
+  */
+
+  const rows =
+    await getReversePricingData(
+      filters
+    );
+
+  currentRows = rows;
+
+  renderedCount = 100;
+
+  /*
+  -----------------------------------
+  EMPTY
+  -----------------------------------
+  */
+
+  if (
+    !rows.length
+  ) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td colspan="10">
+
+          No Records Found
+
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
+  TABLE
+  -----------------------------------
+  */
+
+  renderReversePricingRows();
+
+  /*
+  -----------------------------------
+  EXPORT
+  -----------------------------------
+  */
+
+  const exportBtn =
+    document.getElementById(
+      'reversePricingExportBtn'
+    );
+
+  if (exportBtn) {
+
+    exportBtn.addEventListener(
+      'click',
+      exportReversePricing
+    );
+
+  }
 
 }
