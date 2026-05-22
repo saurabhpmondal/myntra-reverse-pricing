@@ -10,6 +10,10 @@ let uploadedRows = [];
 
 let processedRows = [];
 
+let masterFoundRows = [];
+
+let notFoundRows = [];
+
 function formatNumber(value) {
 
   return Number(
@@ -79,6 +83,7 @@ function exportToCSV() {
   const headers = [
 
     'Style ID',
+    'ERP Status',
     'Brand',
     'MRP',
     'TD %',
@@ -113,6 +118,7 @@ function exportToCSV() {
       row => [
 
         row.styleId,
+        row.erpStatus,
         row.brand,
         row.mrp,
         row.td,
@@ -192,6 +198,7 @@ KPI CARDS
 
 function renderKPICards({
   total,
+  foundInMaster,
   optIn,
   optOut,
   notFound
@@ -209,6 +216,23 @@ function renderKPICards({
 
         <div class="summary-value">
           ${total}
+        </div>
+
+      </div>
+
+      <div class="summary-card">
+
+        <div class="summary-title">
+          FOUND IN MASTER
+        </div>
+
+        <div class="
+          summary-value
+          profit-positive
+        ">
+
+          ${foundInMaster}
+
         </div>
 
       </div>
@@ -284,12 +308,6 @@ function getActionClass(
     return 'status-good';
   }
 
-  if (
-    action === 'NOT FOUND'
-  ) {
-    return 'status-moderate';
-  }
-
   return 'status-bad';
 
 }
@@ -313,6 +331,7 @@ function renderResultTable(
           <tr>
 
             <th>Style ID</th>
+            <th>ERP Status</th>
             <th>Brand</th>
             <th>MRP</th>
             <th>TD %</th>
@@ -351,6 +370,7 @@ function renderResultTable(
             <tr>
 
               <td>${row.styleId || '-'}</td>
+              <td>${row.erpStatus || '-'}</td>
               <td>${row.brand || '-'}</td>
               <td>${formatNumber(row.mrp)}</td>
               <td>${formatNumber(row.td)}%</td>
@@ -587,6 +607,34 @@ export function initializeRebateReport() {
 
       uploadedRows = rows;
 
+      masterFoundRows =
+        uploadedRows.filter(
+          item =>
+            appCache.productMaster.some(
+              row =>
+                String(
+                  row.style_id
+                ) ===
+                String(
+                  item.styleId
+                )
+            )
+        );
+
+      notFoundRows =
+        uploadedRows.filter(
+          item =>
+            !appCache.productMaster.some(
+              row =>
+                String(
+                  row.style_id
+                ) ===
+                String(
+                  item.styleId
+                )
+            )
+        );
+
       validationArea.innerHTML = `
 
         <div class="bulk-verified-card">
@@ -602,11 +650,35 @@ export function initializeRebateReport() {
             <div class="bulk-verified-item">
 
               <div class="bulk-verified-value">
-                ${rows.length}
+                ${uploadedRows.length}
               </div>
 
               <div class="bulk-verified-label">
                 Styles Uploaded
+              </div>
+
+            </div>
+
+            <div class="bulk-verified-item">
+
+              <div class="bulk-verified-value">
+                ${masterFoundRows.length}
+              </div>
+
+              <div class="bulk-verified-label">
+                Found In Master
+              </div>
+
+            </div>
+
+            <div class="bulk-verified-item">
+
+              <div class="bulk-verified-value">
+                ${notFoundRows.length}
+              </div>
+
+              <div class="bulk-verified-label">
+                Not Found
               </div>
 
             </div>
@@ -649,7 +721,7 @@ export function initializeRebateReport() {
 
       setTimeout(() => {
 
-        uploadedRows.forEach(
+        masterFoundRows.forEach(
           item => {
 
             const product =
@@ -662,28 +734,6 @@ export function initializeRebateReport() {
                     item.styleId
                   )
               );
-
-            if (!product) {
-
-              processedRows.push({
-
-                styleId:
-                  item.styleId,
-
-                rebatePercent:
-                  item.rebatePercent,
-
-                targetISP:
-                  item.targetISP,
-
-                rebateAction:
-                  'NOT FOUND'
-
-              });
-
-              return;
-
-            }
 
             try {
 
@@ -760,6 +810,9 @@ export function initializeRebateReport() {
 
                 styleId:
                   item.styleId,
+
+                erpStatus:
+                  product.status,
 
                 brand:
                   product.brand,
@@ -861,21 +914,7 @@ export function initializeRebateReport() {
 
             } catch (error) {
 
-              processedRows.push({
-
-                styleId:
-                  item.styleId,
-
-                rebatePercent:
-                  item.rebatePercent,
-
-                targetISP:
-                  item.targetISP,
-
-                rebateAction:
-                  'OPT-OUT'
-
-              });
+              console.error(error);
 
             }
 
@@ -896,19 +935,15 @@ export function initializeRebateReport() {
               'OPT-OUT'
           ).length;
 
-        const notFoundCount =
-          processedRows.filter(
-            row =>
-              row.rebateAction ===
-              'NOT FOUND'
-          ).length;
-
         resultArea.innerHTML = `
 
           ${renderKPICards({
 
             total:
-              processedRows.length,
+              uploadedRows.length,
+
+            foundInMaster:
+              masterFoundRows.length,
 
             optIn:
               optInCount,
@@ -917,7 +952,7 @@ export function initializeRebateReport() {
               optOutCount,
 
             notFound:
-              notFoundCount
+              notFoundRows.length
 
           })}
 
