@@ -1,144 +1,52 @@
 import {
-  createClient
-} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  supabase
+} from './supabaseService.js';
 
 /* -----------------------------------
-SUPABASE
+CACHE
 ----------------------------------- */
 
-const supabaseUrl =
-  'https://mkaypthahezxsjldbvnf.supabase.co';
-
-const supabaseKey =
-  'sb_publishable_pSu0F0Dx4J6JPyNkdBCRhw_3Rr1Jxwo';
-
-const supabase =
-  createClient(
-    supabaseUrl,
-    supabaseKey
-  );
+let reversePricingCache = [];
 
 /* -----------------------------------
-GET REVERSE PRICING
+LOAD CACHE
 ----------------------------------- */
 
-export async function getReversePricingData({
+export async function loadReversePricingCache() {
 
-  filters = {},
+  if (
+    reversePricingCache.length
+  ) {
 
-  page = 0,
+    return reversePricingCache;
 
-  pageSize = 100
+  }
 
-} = {}) {
+  let allRows = [];
 
-  try {
+  let from = 0;
 
-    let query =
-      supabase
-        .from(
-          'reverse_pricing_cache'
-        )
-        .select('*')
+  const batchSize = 1000;
 
-        .range(
-          page * pageSize,
-          (
-            (page + 1) *
-            pageSize
-          ) - 1
-        );
-
-    /*
-    -----------------------------------
-    BRAND
-    -----------------------------------
-    */
-
-    if (
-      filters.brand
-    ) {
-
-      query =
-        query.eq(
-          'brand',
-          filters.brand
-        );
-
-    }
-
-    /*
-    -----------------------------------
-    ARTICLE TYPE
-    -----------------------------------
-    */
-
-    if (
-      filters.articleType
-    ) {
-
-      query =
-        query.eq(
-          'article_type',
-          filters.articleType
-        );
-
-    }
-
-    /*
-    -----------------------------------
-    STATUS
-    -----------------------------------
-    */
-
-    if (
-      filters.status
-    ) {
-
-      query =
-        query.eq(
-          'status',
-          filters.status
-        );
-
-    }
-
-    /*
-    -----------------------------------
-    SEARCH
-    -----------------------------------
-    */
-
-    if (
-      filters.search
-    ) {
-
-      query =
-        query.or(
-
-          `style_id.ilike.%${filters.search}%,
-           erp_sku.ilike.%${filters.search}%,
-           brand.ilike.%${filters.search}%`
-
-        );
-
-    }
-
-    /*
-    -----------------------------------
-    FETCH
-    -----------------------------------
-    */
+  while (true) {
 
     const {
       data,
       error
-    } = await query;
+    } = await supabase
+      .from(
+        'reverse_pricing_cache'
+      )
+      .select('*')
+      .range(
+        from,
+        from + batchSize - 1
+      );
 
     if (error) {
 
       console.error(
-        'Reverse pricing fetch failed',
+        'Reverse pricing cache load failed:',
         error
       );
 
@@ -146,136 +54,180 @@ export async function getReversePricingData({
 
     }
 
-    /*
-    -----------------------------------
-    NORMALIZE DATA
-    -----------------------------------
-    */
+    if (!data?.length) {
+      break;
+    }
 
-    return (
-      data || []
-    ).map(row => {
+    allRows =
+      allRows.concat(data);
 
-      /*
-      -----------------------------------
-      SELECT RULE
-      -----------------------------------
-      */
+    from += batchSize;
 
-      const selectedRule =
+    console.log(
+      `Loaded ${allRows.length} reverse pricing rows`
+    );
 
-        row.status ===
-        'CONTINUE'
+    if (
+      data.length <
+      batchSize
+    ) {
+      break;
+    }
 
-          ? (
-              filters.continueRule ||
+  }
 
-              'TP+5%'
-            )
+  reversePricingCache =
+    allRows;
 
-          : (
-              filters.otherRule ||
+  console.log(
+    `Reverse pricing cache ready: ${reversePricingCache.length} rows`
+  );
 
-              'TP'
-            );
+  return reversePricingCache;
 
-      /*
-      -----------------------------------
-      RULE DATA
-      -----------------------------------
-      */
+}
 
-      const ruleData =
+/* -----------------------------------
+GET ALL CACHE
+----------------------------------- */
 
-        row.pricing_data?.[
-          selectedRule
-        ] || {};
+export function getReversePricingCache() {
 
-      /*
-      -----------------------------------
-      RETURN FLAT STRUCTURE
-      -----------------------------------
-      */
+  return reversePricingCache;
 
-      return {
+}
 
-        ...row,
+/* -----------------------------------
+FILTER CACHE
+----------------------------------- */
 
-        selectedRule,
+export function filterReversePricingCache({
+  brand,
+  articleType,
+  status,
+  search
+}) {
 
-        sp:
-          ruleData.sp || 0,
+  const searchValue =
+    search
+      ?.toString()
+      .trim()
+      .toUpperCase() || '';
 
-        trade_discount:
-          ruleData.tradeDiscount || 0,
+  return reversePricingCache
+    .filter(row => {
 
-        gta:
-          ruleData.gtaCharge || 0,
+      if (
+        brand &&
+        row.brand !== brand
+      ) {
+        return false;
+      }
 
-        seller_price:
-          ruleData.sellerPrice || 0,
+      if (
+        articleType &&
+        row.article_type !== articleType
+      ) {
+        return false;
+      }
 
-        commission_percent:
-          ruleData.commissionPercent || 0,
+      if (
+        status &&
+        row.status !== status
+      ) {
+        return false;
+      }
 
-        commission_rs:
-          ruleData.commissionRs || 0,
+      if (searchValue) {
 
-        fixed_fee:
-          ruleData.fixedFee || 0,
+        const combined = `
 
-        gst:
-          ruleData.gst || 0,
+          ${row.style_id}
+          ${row.erp_sku}
+          ${row.brand}
+          ${row.article_type}
 
-        upload_settlement:
-          ruleData.uploadSettlement || 0,
+        `.toUpperCase();
 
-        tds_tcs:
-          ruleData.tdsTcs || 0,
+        if (
+          !combined.includes(
+            searchValue
+          )
+        ) {
 
-        bank_settlement:
-          ruleData.bankSettlement || 0,
+          return false;
 
-        royalty:
-          ruleData.royalty || 0,
+        }
 
-        marketing:
-          ruleData.marketing || 0,
+      }
 
-        payout_before_codb:
-          ruleData.payoutBeforeCODB || 0,
+      return true;
 
-        dispatch_cost:
-          ruleData.dispatchCost || 0,
+    })
+    .sort((a, b) => {
 
-        return_cost:
-          ruleData.returnCost || 0,
+      const aDate =
+        new Date(
+          a.launch_date || 0
+        );
 
-        rtv_codb:
-          ruleData.rtvCodb || 0,
+      const bDate =
+        new Date(
+          b.launch_date || 0
+        );
 
-        final_payout:
-          ruleData.finalPayout || 0,
-
-        tp_profit_rs:
-          ruleData.tpProfitRs || 0,
-
-        tp_profit_percent:
-          ruleData.tpProfitPercent || 0
-
-      };
+      return bDate - aDate;
 
     });
 
-  } catch (error) {
+}
 
-    console.error(
-      'Reverse pricing service failed',
-      error
-    );
+/* -----------------------------------
+GET RULE DATA
+----------------------------------- */
 
-    return [];
+export function getReversePricingRuleData(
+  row,
+  rule
+) {
+
+  if (
+    !row?.pricing_data
+  ) {
+
+    return null;
 
   }
+
+  return (
+    row.pricing_data[rule] ||
+    null
+  );
+
+}
+
+/* -----------------------------------
+GET FULL EXPORT DATA
+----------------------------------- */
+
+export async function getFullReversePricingExportData(
+  filters
+) {
+
+  await loadReversePricingCache();
+
+  return filterReversePricingCache(
+    filters
+  );
+
+}
+
+/* -----------------------------------
+RESET CACHE
+----------------------------------- */
+
+export function resetReversePricingCache() {
+
+  reversePricingCache = [];
 
 }
