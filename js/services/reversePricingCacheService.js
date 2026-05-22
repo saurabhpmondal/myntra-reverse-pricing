@@ -207,34 +207,34 @@ export async function getReversePricingData({
           ruleData.sp || 0,
 
         trade_discount:
-          ruleData.trade_discount || 0,
+          ruleData.tradeDiscount || 0,
 
         gta:
-          ruleData.gta || 0,
+          ruleData.gtaCharge || 0,
 
         seller_price:
-          ruleData.seller_price || 0,
+          ruleData.sellerPrice || 0,
 
         commission_percent:
-          ruleData.commission_percent || 0,
+          ruleData.commissionPercent || 0,
 
         commission_rs:
-          ruleData.commission_rs || 0,
+          ruleData.commissionRs || 0,
 
         fixed_fee:
-          ruleData.fixed_fee || 0,
+          ruleData.fixedFee || 0,
 
         gst:
           ruleData.gst || 0,
 
         upload_settlement:
-          ruleData.upload_settlement || 0,
+          ruleData.uploadSettlement || 0,
 
         tds_tcs:
-          ruleData.tds_tcs || 0,
+          ruleData.tdsTcs || 0,
 
         bank_settlement:
-          ruleData.bank_settlement || 0,
+          ruleData.bankSettlement || 0,
 
         royalty:
           ruleData.royalty || 0,
@@ -243,25 +243,25 @@ export async function getReversePricingData({
           ruleData.marketing || 0,
 
         payout_before_codb:
-          ruleData.payout_before_codb || 0,
+          ruleData.payoutBeforeCODB || 0,
 
         dispatch_cost:
-          ruleData.dispatch_cost || 0,
+          ruleData.dispatchCost || 0,
 
         return_cost:
-          ruleData.return_cost || 0,
+          ruleData.returnCost || 0,
 
         rtv_codb:
-          ruleData.rtv_codb || 0,
+          ruleData.rtvCodb || 0,
 
         final_payout:
-          ruleData.final_payout || 0,
+          ruleData.finalPayout || 0,
 
         tp_profit_rs:
-          ruleData.tp_profit_rs || 0,
+          ruleData.tpProfitRs || 0,
 
         tp_profit_percent:
-          ruleData.tp_profit_percent || 0
+          ruleData.tpProfitPercent || 0
 
       };
 
