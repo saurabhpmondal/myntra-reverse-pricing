@@ -356,59 +356,32 @@ function buildRows(
         <tr>
 
           <td>${row.styleId}</td>
-
           <td>${row.erpSku}</td>
-
           <td>${row.brand}</td>
-
           <td>${row.article}</td>
-
           <td>${row.status}</td>
-
           <td>${row.launchDate || '-'}</td>
-
           <td>${row.liveDate || '-'}</td>
-
           <td>${formatNumber(row.tp)}</td>
-
           <td>${row.rule}</td>
-
           <td>${formatNumber(row.sp)}</td>
-
           <td>${formatNumber(row.mrp)}</td>
-
           <td>${formatNumber(row.td)}%</td>
-
           <td>${formatNumber(row.gta)}</td>
-
           <td>${formatNumber(row.sellerPrice)}</td>
-
           <td>${formatNumber(row.commissionPercent)}%</td>
-
           <td>${formatNumber(row.commissionRs)}</td>
-
           <td>${formatNumber(row.fixedFee)}</td>
-
           <td>${formatNumber(row.gst)}</td>
-
           <td>${row.uploadSettlement}</td>
-
           <td>${formatNumber(row.tds)}</td>
-
           <td>${formatNumber(row.bank)}</td>
-
           <td>${formatNumber(row.royalty)}</td>
-
           <td>${formatNumber(row.marketing)}</td>
-
           <td>${formatNumber(row.payoutBeforeCODB)}</td>
-
           <td>${formatNumber(row.dispatch)}</td>
-
           <td>${formatNumber(row.returnCost)}</td>
-
           <td>${formatNumber(row.rtvCodb)}</td>
-
           <td>${formatNumber(row.finalPayout)}</td>
 
           <td class="${getProfitClass(
@@ -730,63 +703,34 @@ export function renderReversePricingReport(
           <tr>
 
             <th>STYLE ID</th>
-
             <th>ERP SKU</th>
-
             <th>BRAND</th>
-
             <th>ARTICLE</th>
-
             <th>STATUS</th>
-
             <th>LAUNCH DATE</th>
-
             <th>LIVE DATE</th>
-
             <th>TP</th>
-
             <th>RULE</th>
-
             <th>SP</th>
-
             <th>MRP</th>
-
             <th>TD %</th>
-
             <th>GTA</th>
-
             <th>SP1</th>
-
             <th>COM %</th>
-
             <th>COM RS</th>
-
             <th>FIXED FEE</th>
-
             <th>GST</th>
-
             <th>US</th>
-
             <th>TDS+TCS</th>
-
             <th>BANK</th>
-
             <th>ROYALTY</th>
-
             <th>MARKETING</th>
-
             <th>PB CODB</th>
-
             <th>DISPATCH</th>
-
             <th>RETURN COST</th>
-
             <th>RTV CODB</th>
-
             <th>FINAL PAYOUT</th>
-
             <th>TP PROFIT RS</th>
-
             <th>TP PROFIT %</th>
 
           </tr>
@@ -803,7 +747,7 @@ export function renderReversePricingReport(
 
     </div>
 
-  ";
+  `;
 
 }
 
@@ -823,15 +767,10 @@ function startExportJob(
     window.reversePricingExportJob;
 
   job.running = true;
-
   job.completed = false;
-
   job.progress = 0;
-
   job.processed = 0;
-
   job.total = products.length;
-
   job.rows = [];
 
   renderCallback();
@@ -878,16 +817,13 @@ function startExportJob(
 
     job.progress =
       Math.min(
-
         100,
-
         Math.round(
           (
             job.processed /
             job.total
           ) * 100
         )
-
       );
 
     renderCallback();
@@ -941,9 +877,7 @@ function startExportJob(
     ];
 
     const csvRows = [
-
       headers.join(',')
-
     ];
 
     job.rows.forEach(row => {
@@ -1008,7 +942,6 @@ function startExportJob(
       );
 
     job.running = false;
-
     job.completed = true;
 
     renderCallback();
