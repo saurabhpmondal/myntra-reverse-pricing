@@ -3,8 +3,20 @@ export function exportToExcel({
   rows = []
 }) {
 
+  /*
+  -----------------------------------
+  EMPTY CHECK
+  -----------------------------------
+  */
+
   if (!rows.length) {
+
+    alert(
+      'No data available for export'
+    );
+
     return;
+
   }
 
   /*
@@ -13,10 +25,15 @@ export function exportToExcel({
   -----------------------------------
   */
 
-  if (
-    typeof XLSX ===
-    'undefined'
-  ) {
+  const XLSXLib =
+
+    window.XLSX ||
+
+    (typeof XLSX !== 'undefined'
+      ? XLSX
+      : null);
+
+  if (!XLSXLib) {
 
     alert(
       'XLSX library not loaded'
@@ -33,7 +50,8 @@ export function exportToExcel({
   */
 
   const worksheet =
-    XLSX.utils.json_to_sheet(
+
+    XLSXLib.utils.json_to_sheet(
       rows
     );
 
@@ -44,12 +62,15 @@ export function exportToExcel({
   */
 
   const workbook =
-    XLSX.utils.book_new();
 
-  XLSX.utils.book_append_sheet(
+    XLSXLib.utils.book_new();
+
+  XLSXLib.utils.book_append_sheet(
 
     workbook,
+
     worksheet,
+
     'Export'
 
   );
@@ -61,6 +82,7 @@ export function exportToExcel({
   */
 
   const columnWidths =
+
     Object.keys(
       rows[0]
     ).map(key => ({
@@ -90,9 +112,12 @@ export function exportToExcel({
   -----------------------------------
   */
 
-  XLSX.writeFile(
+  XLSXLib.writeFile(
+
     workbook,
+
     fileName
+
   );
 
 }
