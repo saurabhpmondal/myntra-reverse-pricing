@@ -451,6 +451,11 @@ export function renderBulkPricingReport() {
         class="bulk-generate-bar"
         style="
           margin-top:24px;
+          display:flex;
+          justify-content:center;
+          align-items:flex-end;
+          gap:16px;
+          flex-wrap:wrap;
         "
       >
 
@@ -458,7 +463,7 @@ export function renderBulkPricingReport() {
           class="filter-group"
           style="
             margin-bottom:0;
-            max-width:180px;
+            width:180px;
           "
         >
 
@@ -473,6 +478,9 @@ export function renderBulkPricingReport() {
             class="filter-input"
             id="bulkMarginPercent"
             placeholder="5 / -3 / 0"
+            style="
+              height:44px;
+            "
           >
 
         </div>
@@ -483,7 +491,7 @@ export function renderBulkPricingReport() {
           disabled
           style="
             height:44px;
-            margin-top:24px;
+            min-width:180px;
           "
         >
 
