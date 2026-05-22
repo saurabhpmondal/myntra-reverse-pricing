@@ -12,9 +12,17 @@ import {
 
 let uploadedRows = [];
 
+let validRows = [];
+
 let processedRows = [];
 
 let failedRows = [];
+
+let visibleRows = 100;
+
+/* -----------------------------------
+FORMAT NUMBER
+----------------------------------- */
 
 function formatNumber(value) {
 
@@ -263,6 +271,12 @@ function renderResultTable(
   rows
 ) {
 
+  const visibleData =
+    rows.slice(
+      0,
+      visibleRows
+    );
+
   return `
 
     <div class="brand-table-wrapper">
@@ -293,7 +307,7 @@ function renderResultTable(
 
         <tbody>
 
-          ${rows.map(row => `
+          ${visibleData.map(row => `
 
             <tr>
 
@@ -374,6 +388,33 @@ function renderResultTable(
       </table>
 
     </div>
+
+    ${
+      rows.length > visibleRows
+        ? `
+
+          <div
+            style="
+              display:flex;
+              justify-content:center;
+              margin-top:24px;
+            "
+          >
+
+            <button
+              class="tab-btn"
+              id="loadMoreRowsBtn"
+            >
+
+              Load More
+
+            </button>
+
+          </div>
+
+        `
+        : ''
+    }
 
   `;
 
@@ -575,7 +616,7 @@ export function initializeBulkPricing() {
 
       uploadedRows = rows;
 
-      const foundCount =
+      validRows =
         rows.filter(styleId =>
 
           appCache.productMaster.some(
@@ -588,11 +629,11 @@ export function initializeBulkPricing() {
               )
           )
 
-        ).length;
+        );
 
       const notFoundCount =
         rows.length -
-        foundCount;
+        validRows.length;
 
       validationArea.innerHTML = `
 
@@ -621,7 +662,7 @@ export function initializeBulkPricing() {
             <div class="bulk-verified-item">
 
               <div class="bulk-verified-value">
-                ${foundCount}
+                ${validRows.length}
               </div>
 
               <div class="bulk-verified-label">
@@ -666,7 +707,15 @@ export function initializeBulkPricing() {
         );
 
       processedRows = [];
+
       failedRows = [];
+
+      visibleRows = 100;
+
+      const totalRows =
+        validRows.length;
+
+      let processedCount = 0;
 
       resultArea.innerHTML = `
 
@@ -676,9 +725,12 @@ export function initializeBulkPricing() {
 
           </div>
 
-          <div>
+          <div id="bulkProgressText">
 
-            Generating pricing...
+            Processing 0 /
+            ${totalRows}
+
+            (0%)
 
           </div>
 
@@ -686,9 +738,20 @@ export function initializeBulkPricing() {
 
       `;
 
-      setTimeout(() => {
+      const batchSize = 50;
 
-        uploadedRows.forEach(
+      function processBatch(
+        startIndex
+      ) {
+
+        const batch =
+          validRows.slice(
+            startIndex,
+            startIndex +
+            batchSize
+          );
+
+        batch.forEach(
           styleId => {
 
             const product =
@@ -703,21 +766,7 @@ export function initializeBulkPricing() {
               );
 
             if (!product) {
-
-              failedRows.push({
-
-                styleId,
-
-                status:
-                  'NOT FOUND',
-
-                reason:
-                  'Style missing in master'
-
-              });
-
               return;
-
             }
 
             try {
@@ -827,8 +876,63 @@ export function initializeBulkPricing() {
 
             }
 
+            processedCount++;
+
           }
         );
+
+        const progress =
+          Math.round(
+            (
+              processedCount /
+              totalRows
+            ) * 100
+          );
+
+        resultArea.innerHTML = `
+
+          <div class="bulk-processing-loader">
+
+            <div class="bulk-processing-spinner">
+
+            </div>
+
+            <div>
+
+              Processing
+              ${processedCount}
+              /
+              ${totalRows}
+
+              (${progress}%)
+
+            </div>
+
+          </div>
+
+        `;
+
+        if (
+          startIndex +
+          batchSize <
+          totalRows
+        ) {
+
+          setTimeout(
+            () => {
+
+              processBatch(
+                startIndex +
+                batchSize
+              );
+
+            },
+            0
+          );
+
+          return;
+
+        }
 
         resultArea.innerHTML = `
 
@@ -848,11 +952,8 @@ export function initializeBulkPricing() {
               ).length,
 
             notFound:
-              failedRows.filter(
-                row =>
-                  row.status ===
-                  'NOT FOUND'
-              ).length
+              uploadedRows.length -
+              validRows.length
 
           })}
 
@@ -887,6 +988,7 @@ export function initializeBulkPricing() {
           </div>
 
           <div
+            id="bulkTableArea"
             style="
               margin-top:24px;
             "
@@ -899,12 +1001,6 @@ export function initializeBulkPricing() {
           </div>
 
         `;
-
-        /*
-        -----------------------------------
-        EXPORT EVENTS
-        -----------------------------------
-        */
 
         document
           .getElementById(
@@ -930,7 +1026,47 @@ export function initializeBulkPricing() {
 
         }
 
-      }, 400);
+        initializeLoadMore();
+
+      }
+
+      processBatch(0);
+
+    }
+  );
+
+}
+
+/* -----------------------------------
+LOAD MORE
+----------------------------------- */
+
+function initializeLoadMore() {
+
+  const loadMoreBtn =
+    document.getElementById(
+      'loadMoreRowsBtn'
+    );
+
+  if (!loadMoreBtn) {
+    return;
+  }
+
+  loadMoreBtn.addEventListener(
+    'click',
+    () => {
+
+      visibleRows += 100;
+
+      document.getElementById(
+        'bulkTableArea'
+      ).innerHTML =
+
+        renderResultTable(
+          processedRows
+        );
+
+      initializeLoadMore();
 
     }
   );
