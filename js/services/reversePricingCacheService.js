@@ -10,7 +10,7 @@ const supabaseUrl =
   'https://mkaypthahezxsjldbvnf.supabase.co';
 
 const supabaseKey =
-  'YOUR_PUBLISHABLE_KEY';
+  'sb_publishable_pSu0F0Dx4J6JPyNkdBCRhw_3Rr1Jxwo';
 
 const supabase =
   createClient(
