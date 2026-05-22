@@ -3,8 +3,8 @@ import {
 } from '@supabase/supabase-js';
 
 import {
-  initializeApp
-} from '../js/services/dataLoader.js';
+  appCache
+} from '../js/services/cacheService.js';
 
 import {
   generatePricingLadder
@@ -25,6 +25,124 @@ const supabase =
     supabaseUrl,
     supabaseKey
   );
+
+/* -----------------------------------
+HELPERS
+----------------------------------- */
+
+function cleanText(value) {
+
+  return value
+    ?.toString()
+    .trim()
+    .toUpperCase() || '';
+
+}
+
+function buildCommercialMap(data) {
+
+  const map = {};
+
+  data.forEach(row => {
+
+    const brand =
+      cleanText(row.brand);
+
+    const article =
+      cleanText(row.article_type);
+
+    if (!map[brand]) {
+      map[brand] = {};
+    }
+
+    if (!map[brand][article]) {
+      map[brand][article] = [];
+    }
+
+    map[brand][article].push({
+
+      ...row,
+
+      brand,
+      article_type: article
+
+    });
+
+  });
+
+  return map;
+
+}
+
+function buildGtaMap(data) {
+
+  const map = {};
+
+  data.forEach(row => {
+
+    const brand =
+      cleanText(row.brand);
+
+    const article =
+      cleanText(row.article_type);
+
+    if (!map[brand]) {
+      map[brand] = {};
+    }
+
+    if (!map[brand][article]) {
+      map[brand][article] = [];
+    }
+
+    map[brand][article].push({
+
+      ...row,
+
+      brand,
+      article_type: article
+
+    });
+
+  });
+
+  return map;
+
+}
+
+function normalizeProduct(product) {
+
+  return {
+
+    ...product,
+
+    style_id:
+      cleanText(
+        product.style_id
+      ),
+
+    erp_sku:
+      cleanText(
+        product.erp_sku
+      ),
+
+    brand:
+      cleanText(
+        product.brand
+      ),
+
+    article_type:
+      cleanText(
+        product.article_type
+      ),
+
+    status:
+      cleanText(
+        product.status
+      )
+
+  };
+
+}
 
 /* -----------------------------------
 RULES
@@ -53,7 +171,7 @@ const OTHER_RULES = [
 ];
 
 /* -----------------------------------
-BUILD PRICING JSON
+BUILD PRICING
 ----------------------------------- */
 
 function buildPricingJSON(
@@ -85,12 +203,12 @@ function buildPricingJSON(
 
         tp:
           Number(
-            product.tp
+            product.tp || 0
           ),
 
         mrp:
           Number(
-            product.mrp
+            product.mrp || 0
           )
 
       });
@@ -108,12 +226,6 @@ function buildPricingJSON(
         return;
       }
 
-      /*
-      -----------------------------------
-      STORE ORIGINAL ENGINE OBJECT
-      -----------------------------------
-      */
-
       pricingData[rule] = {
 
         sp:
@@ -128,7 +240,7 @@ function buildPricingJSON(
   } catch (error) {
 
     console.error(
-      `Pricing failed for style ${product.style_id}`
+      `Pricing failed for ${product.style_id}`
     );
 
     console.error(error);
@@ -150,7 +262,7 @@ async function buildReversePricingCache() {
   );
 
   console.log(
-    'INITIALIZING PRICING ENGINE'
+    'LOADING PRICING ENGINE'
   );
 
   console.log(
@@ -159,31 +271,67 @@ async function buildReversePricingCache() {
 
   /*
   -----------------------------------
-  CRITICAL FIX
+  LOAD MASTERS
   -----------------------------------
   */
 
-  await initializeApp();
+  const {
+    data: commercialsMaster,
+    error: commercialsError
+  } = await supabase
+    .from('commercials_master')
+    .select('*');
+
+  if (commercialsError) {
+
+    console.error(
+      commercialsError
+    );
+
+    return;
+
+  }
+
+  const {
+    data: gtaMaster,
+    error: gtaError
+  } = await supabase
+    .from('gta_master')
+    .select('*');
+
+  if (gtaError) {
+
+    console.error(
+      gtaError
+    );
+
+    return;
+
+  }
+
+  appCache.commercialsMaster =
+    commercialsMaster;
+
+  appCache.gtaMaster =
+    gtaMaster;
+
+  appCache.commercialMap =
+    buildCommercialMap(
+      commercialsMaster
+    );
+
+  appCache.gtaMap =
+    buildGtaMap(
+      gtaMaster
+    );
 
   console.log(
-    '\nPricing Engine Ready.\n'
-  );
-
-  console.log(
-    '\n===================================='
-  );
-
-  console.log(
-    'STARTING CACHE BUILD'
-  );
-
-  console.log(
-    '====================================\n'
+    '\nPricing maps initialized.\n'
   );
 
   /*
   -----------------------------------
-  FETCH PRODUCT MASTER
+  LOAD PRODUCTS
   -----------------------------------
   */
 
@@ -197,7 +345,6 @@ async function buildReversePricingCache() {
   if (productError) {
 
     console.error(
-      'Product fetch failed:',
       productError
     );
 
@@ -229,7 +376,6 @@ async function buildReversePricingCache() {
   if (deleteError) {
 
     console.error(
-      'Cache clear failed:',
       deleteError
     );
 
@@ -237,13 +383,9 @@ async function buildReversePricingCache() {
 
   }
 
-  console.log(
-    'Old cache cleared successfully.'
-  );
-
   /*
   -----------------------------------
-  BUILD CACHE ROWS
+  BUILD ROWS
   -----------------------------------
   */
 
@@ -251,7 +393,12 @@ async function buildReversePricingCache() {
 
   let processed = 0;
 
-  products.forEach(product => {
+  products.forEach(rawProduct => {
+
+    const product =
+      normalizeProduct(
+        rawProduct
+      );
 
     const pricingData =
       buildPricingJSON(
@@ -316,7 +463,7 @@ async function buildReversePricingCache() {
 
   /*
   -----------------------------------
-  BATCH INSERT
+  INSERT
   -----------------------------------
   */
 
