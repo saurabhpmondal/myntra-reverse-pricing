@@ -76,6 +76,12 @@ export async function loadReversePricingCache() {
 
   }
 
+  /*
+  -----------------------------------
+  STORE RAW CACHE
+  -----------------------------------
+  */
+
   reversePricingCache =
     allRows;
 
@@ -199,6 +205,12 @@ export function getReversePricingRuleData(
 
   }
 
+  /*
+  -----------------------------------
+  RETURN RAW ENGINE OBJECT
+  -----------------------------------
+  */
+
   return (
     row.pricing_data[rule] ||
     null
@@ -207,7 +219,7 @@ export function getReversePricingRuleData(
 }
 
 /* -----------------------------------
-GET FULL EXPORT DATA
+EXPORT DATA
 ----------------------------------- */
 
 export async function getFullReversePricingExportData(
