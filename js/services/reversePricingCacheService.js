@@ -18,16 +18,32 @@ const supabase =
 GET REVERSE PRICING DATA
 ----------------------------------- */
 
-export async function getReversePricingData(
-  filters = {}
-) {
+export async function getReversePricingData({
+
+  filters = {},
+
+  page = 0,
+
+  pageSize = 100
+
+} = {}) {
 
   let query =
     supabase
       .from(
         'reverse_pricing_cache'
       )
-      .select('*');
+      .select('*')
+
+      .range(
+
+        page * pageSize,
+
+        (page * pageSize) +
+
+        pageSize - 1
+
+      );
 
   /*
   -----------------------------------
