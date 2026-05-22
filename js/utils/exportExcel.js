@@ -26,17 +26,16 @@ export function exportToExcel({
   */
 
   const XLSXLib =
-
-    window.XLSX ||
-
-    (typeof XLSX !== 'undefined'
-      ? XLSX
-      : null);
+    globalThis.XLSX;
 
   if (!XLSXLib) {
 
     alert(
       'XLSX library not loaded'
+    );
+
+    console.error(
+      'XLSX NOT FOUND ON GLOBAL SCOPE'
     );
 
     return;
