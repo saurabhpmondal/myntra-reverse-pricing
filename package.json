@@ -1,0 +1,23 @@
+{
+  "name": "pricing-engine-cache-builder",
+
+  "version": "1.0.0",
+
+  "type": "module",
+
+  "scripts": {
+
+    "build-cache":
+      "node scripts/buildReversePricingCache.js"
+
+  },
+
+  "dependencies": {
+
+    "@supabase/supabase-js": "^2.49.8",
+
+    "dotenv": "^16.5.0"
+
+  }
+
+}
