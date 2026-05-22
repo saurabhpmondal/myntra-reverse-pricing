@@ -14,6 +14,8 @@ let currentRows = [];
 
 let renderedCount = 100;
 
+let currentPage = 0;
+
 let isExporting = false;
 
 /* -----------------------------------
@@ -43,6 +45,8 @@ export function resetReversePricingGeneration() {
   currentRows = [];
 
   renderedCount = 100;
+
+  currentPage = 0;
 
 }
 
@@ -342,9 +346,39 @@ function initializeLoadMore() {
 
   btn.addEventListener(
     'click',
-    () => {
+    async () => {
 
-      renderedCount += 100;
+      btn.disabled = true;
+
+      btn.innerText =
+        'Loading...';
+
+      currentPage++;
+
+      const newRows =
+        await getReversePricingData({
+
+          filters:
+            window.reversePricingFilters,
+
+          page:
+            currentPage,
+
+          pageSize:
+            100
+
+        });
+
+      currentRows = [
+
+        ...currentRows,
+
+        ...newRows
+
+      ];
+
+      renderedCount =
+        currentRows.length;
 
       renderReversePricingRows();
 
@@ -375,12 +409,7 @@ function renderReversePricingRows() {
 
   tbody.innerHTML =
     renderTableRows(
-
-      currentRows.slice(
-        0,
-        renderedCount
-      )
-
+      currentRows
     );
 
   /*
@@ -390,8 +419,8 @@ function renderReversePricingRows() {
   */
 
   if (
-    currentRows.length >
-    renderedCount
+    currentRows.length >=
+    100
   ) {
 
     loadMoreArea.innerHTML = `
@@ -532,6 +561,9 @@ export async function initializeReversePricingGeneration(
   filters
 ) {
 
+  window.reversePricingFilters =
+    filters;
+
   const tbody =
     document.getElementById(
       'reversePricingTableBody'
@@ -543,14 +575,25 @@ export async function initializeReversePricingGeneration(
   -----------------------------------
   */
 
+  currentPage = 0;
+
   const rows =
-    await getReversePricingData(
-      filters
-    );
+    await getReversePricingData({
+
+      filters,
+
+      page:
+        currentPage,
+
+      pageSize:
+        100
+
+    });
 
   currentRows = rows;
 
-  renderedCount = 100;
+  renderedCount =
+    rows.length;
 
   /*
   -----------------------------------
