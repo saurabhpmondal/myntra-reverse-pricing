@@ -8,8 +8,6 @@ import {
 
 let currentRows = [];
 
-let renderedCount = 100;
-
 let currentPage = 0;
 
 let isExporting = false;
@@ -40,43 +38,44 @@ export function resetReversePricingGeneration() {
 
   currentRows = [];
 
-  renderedCount = 100;
-
   currentPage = 0;
 
 }
 
 /* -----------------------------------
-GET RULE DATA
+GET RULE
 ----------------------------------- */
 
 function getSelectedRule(row) {
 
-  const rule =
-    row.status === 'CONTINUE'
-      ? (
-          window.reversePricingFilters
-            ?.continueRule ||
+  return row.status === 'CONTINUE'
 
-          'TP+5%'
-        )
-      : (
-          window.reversePricingFilters
-            ?.otherRule ||
+    ? (
+        window.reversePricingFilters
+          ?.continueRule ||
 
-          'TP'
-        );
+        'TP+5%'
+      )
 
-  return rule;
+    : (
+        window.reversePricingFilters
+          ?.otherRule ||
+
+        'TP'
+      );
 
 }
+
+/* -----------------------------------
+GET PRICING DATA
+----------------------------------- */
 
 function getPricingData(row) {
 
   const selectedRule =
     getSelectedRule(row);
 
-  const pricingData =
+  const pricing =
     row.pricing_data?.[
       selectedRule
     ] || {};
@@ -86,64 +85,64 @@ function getPricingData(row) {
     selectedRule,
 
     sp:
-      pricingData.sp || 0,
+      pricing.sp || 0,
 
     trade_discount:
-      pricingData.trade_discount || 0,
+      pricing.trade_discount || 0,
 
     gta:
-      pricingData.gta || 0,
+      pricing.gta || 0,
 
     seller_price:
-      pricingData.seller_price || 0,
+      pricing.seller_price || 0,
 
     commission_percent:
-      pricingData.commission_percent || 0,
+      pricing.commission_percent || 0,
 
     commission_rs:
-      pricingData.commission_rs || 0,
+      pricing.commission_rs || 0,
 
     fixed_fee:
-      pricingData.fixed_fee || 0,
+      pricing.fixed_fee || 0,
 
     gst:
-      pricingData.gst || 0,
+      pricing.gst || 0,
 
     upload_settlement:
-      pricingData.upload_settlement || 0,
+      pricing.upload_settlement || 0,
 
     tds_tcs:
-      pricingData.tds_tcs || 0,
+      pricing.tds_tcs || 0,
 
     bank_settlement:
-      pricingData.bank_settlement || 0,
+      pricing.bank_settlement || 0,
 
     royalty:
-      pricingData.royalty || 0,
+      pricing.royalty || 0,
 
     marketing:
-      pricingData.marketing || 0,
+      pricing.marketing || 0,
 
     payout_before_codb:
-      pricingData.payout_before_codb || 0,
+      pricing.payout_before_codb || 0,
 
     dispatch_cost:
-      pricingData.dispatch_cost || 0,
+      pricing.dispatch_cost || 0,
 
     return_cost:
-      pricingData.return_cost || 0,
+      pricing.return_cost || 0,
 
     rtv_codb:
-      pricingData.rtv_codb || 0,
+      pricing.rtv_codb || 0,
 
     final_payout:
-      pricingData.final_payout || 0,
+      pricing.final_payout || 0,
 
     tp_profit_rs:
-      pricingData.tp_profit_rs || 0,
+      pricing.tp_profit_rs || 0,
 
     tp_profit_percent:
-      pricingData.tp_profit_percent || 0
+      pricing.tp_profit_percent || 0
 
   };
 
@@ -155,9 +154,7 @@ EXPORT
 
 async function exportReversePricing() {
 
-  if (
-    isExporting
-  ) {
+  if (isExporting) {
     return;
   }
 
@@ -168,14 +165,14 @@ async function exportReversePricing() {
       'reversePricingExportBtn'
     );
 
-  const progressBar =
-    document.getElementById(
-      'reversePricingExportProgress'
-    );
-
   const progressText =
     document.getElementById(
       'reversePricingExportText'
+    );
+
+  const progressWrapper =
+    document.getElementById(
+      'reversePricingExportProgress'
     );
 
   if (exportBtn) {
@@ -187,21 +184,18 @@ async function exportReversePricing() {
 
   }
 
-  if (progressBar) {
+  if (progressWrapper) {
 
-    progressBar.style.display =
+    progressWrapper.style.display =
       'block';
 
   }
 
   const exportRows = [];
 
-  const total =
-    currentRows.length;
-
   for (
     let i = 0;
-    i < total;
+    i < currentRows.length;
     i++
   ) {
 
@@ -304,7 +298,7 @@ async function exportReversePricing() {
         Math.round(
           (
             (i + 1) /
-            total
+            currentRows.length
           ) * 100
         );
 
@@ -358,7 +352,7 @@ async function exportReversePricing() {
 }
 
 /* -----------------------------------
-TABLE
+TABLE ROWS
 ----------------------------------- */
 
 function renderTableRows(
@@ -374,55 +368,59 @@ function renderTableRows(
 
       <tr>
 
-        <td>
-          ${row.style_id}
-        </td>
+        <td>${row.style_id}</td>
 
-        <td>
-          ${row.brand}
-        </td>
+        <td>${row.brand}</td>
 
-        <td>
-          ${row.article_type}
-        </td>
+        <td>${row.article_type}</td>
 
-        <td>
-          ${row.status}
-        </td>
+        <td>${row.status}</td>
 
-        <td>
-          ${formatNumber(
-            row.tp
-          )}
-        </td>
+        <td>${formatNumber(row.tp)}</td>
 
-        <td>
-          ${pricing.selectedRule}
-        </td>
+        <td>${formatNumber(row.mrp)}</td>
 
-        <td>
-          ${formatNumber(
-            pricing.sp
-          )}
-        </td>
+        <td>${pricing.selectedRule}</td>
 
-        <td>
-          ${formatNumber(
-            pricing.final_payout
-          )}
-        </td>
+        <td>${formatNumber(pricing.sp)}</td>
 
-        <td>
-          ${formatNumber(
-            pricing.tp_profit_rs
-          )}
-        </td>
+        <td>${formatNumber(pricing.trade_discount)}%</td>
 
-        <td>
-          ${formatNumber(
-            pricing.tp_profit_percent
-          )}%
-        </td>
+        <td>${formatNumber(pricing.gta)}</td>
+
+        <td>${formatNumber(pricing.seller_price)}</td>
+
+        <td>${formatNumber(pricing.commission_percent)}%</td>
+
+        <td>${formatNumber(pricing.commission_rs)}</td>
+
+        <td>${formatNumber(pricing.fixed_fee)}</td>
+
+        <td>${formatNumber(pricing.gst)}</td>
+
+        <td>${formatNumber(pricing.upload_settlement)}</td>
+
+        <td>${formatNumber(pricing.tds_tcs)}</td>
+
+        <td>${formatNumber(pricing.bank_settlement)}</td>
+
+        <td>${formatNumber(pricing.royalty)}</td>
+
+        <td>${formatNumber(pricing.marketing)}</td>
+
+        <td>${formatNumber(pricing.payout_before_codb)}</td>
+
+        <td>${formatNumber(pricing.dispatch_cost)}</td>
+
+        <td>${formatNumber(pricing.return_cost)}</td>
+
+        <td>${formatNumber(pricing.rtv_codb)}</td>
+
+        <td>${formatNumber(pricing.final_payout)}</td>
+
+        <td>${formatNumber(pricing.tp_profit_rs)}</td>
+
+        <td>${formatNumber(pricing.tp_profit_percent)}%</td>
 
       </tr>
 
@@ -436,7 +434,9 @@ function renderTableRows(
 LOAD MORE
 ----------------------------------- */
 
-function initializeLoadMore() {
+function initializeLoadMore(
+  filters
+) {
 
   const btn =
     document.getElementById(
@@ -461,8 +461,7 @@ function initializeLoadMore() {
       const newRows =
         await getReversePricingData({
 
-          filters:
-            window.reversePricingFilters,
+          filters,
 
           page:
             currentPage,
@@ -480,10 +479,9 @@ function initializeLoadMore() {
 
       ];
 
-      renderedCount =
-        currentRows.length;
-
-      renderReversePricingRows();
+      renderReversePricingRows(
+        filters
+      );
 
     }
   );
@@ -494,7 +492,9 @@ function initializeLoadMore() {
 RENDER ROWS
 ----------------------------------- */
 
-function renderReversePricingRows() {
+function renderReversePricingRows(
+  filters
+) {
 
   const tbody =
     document.getElementById(
@@ -516,8 +516,7 @@ function renderReversePricingRows() {
     );
 
   if (
-    currentRows.length >=
-    100
+    currentRows.length >= 100
   ) {
 
     loadMoreArea.innerHTML = `
@@ -533,7 +532,9 @@ function renderReversePricingRows() {
 
     `;
 
-    initializeLoadMore();
+    initializeLoadMore(
+      filters
+    );
 
   } else {
 
@@ -603,8 +604,25 @@ export function renderReversePricingReport() {
               <th>Article Type</th>
               <th>Status</th>
               <th>TP</th>
+              <th>MRP</th>
               <th>Rule</th>
               <th>SP</th>
+              <th>TD %</th>
+              <th>GTA</th>
+              <th>Seller Price</th>
+              <th>Com %</th>
+              <th>Com Rs</th>
+              <th>Fixed Fee</th>
+              <th>GST</th>
+              <th>Upload Settlement</th>
+              <th>TDS+TCS</th>
+              <th>Bank Settlement</th>
+              <th>Royalty</th>
+              <th>Marketing</th>
+              <th>PB-CODB</th>
+              <th>Dispatch</th>
+              <th>Return Cost</th>
+              <th>RTV CODB</th>
               <th>Final Payout</th>
               <th>TP Profit Rs</th>
               <th>TP Profit %</th>
@@ -619,7 +637,7 @@ export function renderReversePricingReport() {
 
             <tr>
 
-              <td colspan="10">
+              <td colspan="27">
 
                 Loading Pricing...
 
@@ -661,12 +679,12 @@ export async function initializeReversePricingGeneration(
   window.reversePricingFilters =
     filters;
 
+  currentPage = 0;
+
   const tbody =
     document.getElementById(
       'reversePricingTableBody'
     );
-
-  currentPage = 0;
 
   const rows =
     await getReversePricingData({
@@ -683,18 +701,13 @@ export async function initializeReversePricingGeneration(
 
   currentRows = rows;
 
-  renderedCount =
-    rows.length;
-
-  if (
-    !rows.length
-  ) {
+  if (!rows.length) {
 
     tbody.innerHTML = `
 
       <tr>
 
-        <td colspan="10">
+        <td colspan="27">
 
           No Records Found
 
@@ -708,7 +721,9 @@ export async function initializeReversePricingGeneration(
 
   }
 
-  renderReversePricingRows();
+  renderReversePricingRows(
+    filters
+  );
 
   const exportBtn =
     document.getElementById(
