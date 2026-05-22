@@ -197,13 +197,13 @@ async function exportReversePricing(
         pricing.fixedFee,
 
       GST:
-        pricing.gst,
+        pricing.gstOnComAndFee,
 
       US:
         pricing.uploadSettlement,
 
       'TDS+TCS':
-        pricing.tdsTcs,
+        pricing.totalTaxDeduction,
 
       BANK:
         pricing.bankSettlement,
@@ -227,7 +227,7 @@ async function exportReversePricing(
         pricing.rtvCodb,
 
       'Final Payout':
-        pricing.finalPayout,
+        pricing.payoutAfterCODB,
 
       'TP Profit Rs':
         pricing.tpProfitRs,
@@ -361,11 +361,11 @@ function buildRows(
 
         <td>${formatNumber(pricing.fixedFee)}</td>
 
-        <td>${formatNumber(pricing.gst)}</td>
+        <td>${formatNumber(pricing.gstOnComAndFee)}</td>
 
         <td>${formatNumber(pricing.uploadSettlement)}</td>
 
-        <td>${formatNumber(pricing.tdsTcs)}</td>
+        <td>${formatNumber(pricing.totalTaxDeduction)}</td>
 
         <td>${formatNumber(pricing.bankSettlement)}</td>
 
@@ -381,7 +381,7 @@ function buildRows(
 
         <td>${formatNumber(pricing.rtvCodb)}</td>
 
-        <td>${formatNumber(pricing.finalPayout)}</td>
+        <td>${formatNumber(pricing.payoutAfterCODB)}</td>
 
         <td class="${getProfitClass(
           pricing.tpProfitRs
