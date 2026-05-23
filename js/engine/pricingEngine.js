@@ -91,6 +91,14 @@ function generateOtherRules(tp) {
         )
     },
 
+{
+  label: 'TP-15%',
+  target:
+    round2(
+      tp * 0.85
+    )
+},
+
     {
       label: 'TP-10%',
       target:
