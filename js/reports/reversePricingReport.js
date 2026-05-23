@@ -423,6 +423,21 @@ function renderTable(
   return `
 
     <div
+      style="
+        margin-bottom:16px;
+        font-size:14px;
+        font-weight:600;
+        color:#666;
+      "
+    >
+
+      Loaded
+      ${rows.length.toLocaleString('en-IN')}
+      Pricing Records
+
+    </div>
+
+    <div
       class="bulk-export-bar"
       style="
         margin-bottom:16px;
