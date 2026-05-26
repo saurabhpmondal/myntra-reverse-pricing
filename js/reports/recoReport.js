@@ -10,6 +10,10 @@ let uploadedRows = [];
 
 let processedRows = [];
 
+let masterFoundRows = [];
+
+let notFoundRows = [];
+
 /* -----------------------------------
 FORMAT NUMBER
 ----------------------------------- */
@@ -37,34 +41,19 @@ function downloadSampleFile() {
   const csv = `style_id,recommended_price,settlement_price
 38992879,1602,912`;
 
-  const blob =
-    new Blob(
-      [csv],
-      {
-        type: 'text/csv'
-      }
-    );
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-  const a =
+  const link =
     document.createElement(
       'a'
     );
 
-  a.href = url;
+  link.href =
+    'data:text/csv;charset=utf-8,' +
+    encodeURIComponent(csv);
 
-  a.download =
+  link.download =
     'reco_engine_sample.csv';
 
-  a.click();
-
-  URL.revokeObjectURL(
-    url
-  );
+  link.click();
 
 }
 
@@ -142,35 +131,21 @@ function exportToCSV() {
 
   ].join('\n');
 
-  const blob =
-    new Blob(
-      [csvContent],
-      {
-        type:
-          'text/csv;charset=utf-8;'
-      }
-    );
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
   const link =
     document.createElement(
       'a'
     );
 
-  link.href = url;
+  link.href =
+    'data:text/csv;charset=utf-8,' +
+    encodeURIComponent(
+      csvContent
+    );
 
   link.download =
     'reco_engine_output.csv';
 
   link.click();
-
-  URL.revokeObjectURL(
-    url
-  );
 
 }
 
@@ -180,6 +155,7 @@ KPI CARDS
 
 function renderKPICards({
   total,
+  foundInMaster,
   optIn,
   optOut,
   notFound
@@ -197,6 +173,23 @@ function renderKPICards({
 
         <div class="summary-value">
           ${total}
+        </div>
+
+      </div>
+
+      <div class="summary-card">
+
+        <div class="summary-title">
+          FOUND IN MASTER
+        </div>
+
+        <div class="
+          summary-value
+          profit-positive
+        ">
+
+          ${foundInMaster}
+
         </div>
 
       </div>
@@ -560,6 +553,34 @@ export function initializeRecoReport() {
 
       uploadedRows = rows;
 
+      masterFoundRows =
+        uploadedRows.filter(
+          item =>
+            appCache.productMaster.some(
+              row =>
+                String(
+                  row.style_id
+                ) ===
+                String(
+                  item.styleId
+                )
+            )
+        );
+
+      notFoundRows =
+        uploadedRows.filter(
+          item =>
+            !appCache.productMaster.some(
+              row =>
+                String(
+                  row.style_id
+                ) ===
+                String(
+                  item.styleId
+                )
+            )
+        );
+
       validationArea.innerHTML = `
 
         <div class="bulk-verified-card">
@@ -575,11 +596,35 @@ export function initializeRecoReport() {
             <div class="bulk-verified-item">
 
               <div class="bulk-verified-value">
-                ${rows.length}
+                ${uploadedRows.length}
               </div>
 
               <div class="bulk-verified-label">
                 Styles Uploaded
+              </div>
+
+            </div>
+
+            <div class="bulk-verified-item">
+
+              <div class="bulk-verified-value">
+                ${masterFoundRows.length}
+              </div>
+
+              <div class="bulk-verified-label">
+                Found In Master
+              </div>
+
+            </div>
+
+            <div class="bulk-verified-item">
+
+              <div class="bulk-verified-value">
+                ${notFoundRows.length}
+              </div>
+
+              <div class="bulk-verified-label">
+                Not Found
               </div>
 
             </div>
@@ -622,7 +667,7 @@ export function initializeRecoReport() {
 
       setTimeout(() => {
 
-        uploadedRows.forEach(
+        masterFoundRows.forEach(
           item => {
 
             const product =
@@ -635,28 +680,6 @@ export function initializeRecoReport() {
                     item.styleId
                   )
               );
-
-            if (!product) {
-
-              processedRows.push({
-
-                styleId:
-                  item.styleId,
-
-                recommendedPrice:
-                  item.recommendedPrice,
-
-                uploadSettlement:
-                  item.settlementPrice,
-
-                recoStatus:
-                  'NOT FOUND'
-
-              });
-
-              return;
-
-            }
 
             try {
 
@@ -853,19 +876,15 @@ export function initializeRecoReport() {
               'OPT-OUT'
           ).length;
 
-        const notFoundCount =
-          processedRows.filter(
-            row =>
-              row.recoStatus ===
-              'NOT FOUND'
-          ).length;
-
         resultArea.innerHTML = `
 
           ${renderKPICards({
 
             total:
-              processedRows.length,
+              uploadedRows.length,
+
+            foundInMaster:
+              masterFoundRows.length,
 
             optIn:
               optInCount,
@@ -874,7 +893,7 @@ export function initializeRecoReport() {
               optOutCount,
 
             notFound:
-              notFoundCount
+              notFoundRows.length
 
           })}
 
@@ -924,8 +943,3 @@ export function initializeRecoReport() {
   );
 
 }
-
-
-
-
-
