@@ -170,6 +170,26 @@ function renderContent() {
 
   /*
   -----------------------------------
+  CUSTOM REVERSE PRICING
+  -----------------------------------
+  */
+
+  if (
+    activeTab ===
+    'custom-reverse-pricing'
+  ) {
+
+    content.innerHTML =
+      renderCustomReversePricingReport();
+
+    initializeCustomReversePricing();
+
+    return;
+
+  }
+
+  /*
+  -----------------------------------
   PRICING CALCULATOR
   -----------------------------------
   */
@@ -285,6 +305,7 @@ function renderContent() {
     </div>
 
   `;
+
 }
 
 /* -----------------------------------
