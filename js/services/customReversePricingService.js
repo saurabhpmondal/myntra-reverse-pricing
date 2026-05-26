@@ -47,11 +47,57 @@ export async function processCustomReversePricingFile(file) {
 
   }
 
-  const buffer =
-    await file.arrayBuffer();
+  /*
+  -----------------------------------
+  READ FILE
+  -----------------------------------
+  */
 
-  const workbook =
-    XLSXLib.read(buffer);
+  let workbook;
+
+  /*
+  -----------------------------------
+  CSV
+  -----------------------------------
+  */
+
+  if (
+    file.name
+      .toLowerCase()
+      .endsWith('.csv')
+  ) {
+
+    const text =
+      await file.text();
+
+    workbook =
+      XLSXLib.read(
+        text,
+        {
+          type: 'string'
+        }
+      );
+
+  } else {
+
+    /*
+    -----------------------------------
+    XLSX
+    -----------------------------------
+    */
+
+    const buffer =
+      await file.arrayBuffer();
+
+    workbook =
+      XLSXLib.read(
+        buffer,
+        {
+          type: 'array'
+        }
+      );
+
+  }
 
   const sheetName =
     workbook.SheetNames[0];
@@ -60,30 +106,45 @@ export async function processCustomReversePricingFile(file) {
     workbook.Sheets[sheetName];
 
   const rows =
-    XLSXLib.utils.sheet_to_json(sheet);
+    XLSXLib.utils.sheet_to_json(
+      sheet,
+      {
+        defval: ''
+      }
+    );
 
   const results = [];
 
   rows.forEach(row => {
 
+    /*
+    -----------------------------------
+    NORMALIZED HEADERS
+    -----------------------------------
+    */
+
     const styleId =
-      row['STYLE ID']
+      row['style_id']
         ?.toString()
         .trim()
         .toUpperCase();
 
     const customReturnPercent =
       Number(
-        row['RETURN %'] || 0
+        row[
+          'return_percentage'
+        ] || 0
       );
 
     const customDispatchCost =
       Number(
-        row['DISPATCH COST'] || 0
+        row[
+          'dispatch_cost'
+        ] || 0
       );
 
     const selectedRule =
-      row['RULE']
+      row['rule']
         ?.toString()
         .trim()
         .toUpperCase();
@@ -151,7 +212,7 @@ export async function processCustomReversePricingFile(file) {
 
     /*
     -----------------------------------
-    SELECT ONLY REQUIRED RULE
+    SELECT RULE
     -----------------------------------
     */
 
