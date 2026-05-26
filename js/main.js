@@ -53,6 +53,11 @@ import {
   initializeRecoReport
 } from './reports/recoReport.js';
 
+import {
+  renderCustomReversePricingReport,
+  initializeCustomReversePricing
+} from './reports/customReversePricingReport.js';
+
 let activeTab = 'dashboard';
 
 let filters = {
