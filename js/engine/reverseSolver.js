@@ -15,7 +15,11 @@ export function solveSellingPrice({
   articleType,
 
   targetPayout,
-  tp
+  tp,
+  mrp,
+
+  customReturnPercent = null,
+  customDispatchCost = null
 
 }) {
 
@@ -61,7 +65,11 @@ export function solveSellingPrice({
 
         sellingPrice,
 
-        tp
+        tp,
+        mrp,
+
+        customReturnPercent,
+        customDispatchCost
 
       });
 
