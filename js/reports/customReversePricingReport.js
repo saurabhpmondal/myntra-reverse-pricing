@@ -37,17 +37,44 @@ DOWNLOAD SAMPLE CSV
 
 function downloadSampleFile() {
 
-  const csvContent =
+  const rows = [
 
-`STYLE ID,RETURN %,DISPATCH COST,RULE
-DEMO123,35,30,TP`;
+    [
+      'style_id',
+      'return_percentage',
+      'dispatch_cost',
+      'rule'
+    ],
+
+    [
+      'DEMO123',
+      '35',
+      '30',
+      'TP'
+    ]
+
+  ];
+
+  const csvContent =
+    rows
+      .map(
+        row => row.join(',')
+      )
+      .join('\n');
 
   const blob =
     new Blob(
-      [csvContent],
+
+      [
+        '\uFEFF' +
+        csvContent
+      ],
+
       {
-        type: 'text/csv;charset=utf-8;'
+        type:
+          'text/csv;charset=utf-8;'
       }
+
     );
 
   const url =
@@ -659,7 +686,7 @@ export function initializeCustomReversePricing() {
 
               const styleId =
                 row[
-                  'STYLE ID'
+                  'style_id'
                 ]
                   ?.toString()
                   .trim()
@@ -692,6 +719,9 @@ export function initializeCustomReversePricing() {
 
           actionsBox.style.display =
             'block';
+
+          uploadedFileVerified =
+            true;
 
           document.getElementById(
             'customTotalUploaded'
@@ -746,6 +776,18 @@ export function initializeCustomReversePricing() {
 
           alert(
             'Please upload file'
+          );
+
+          return;
+
+        }
+
+        if (
+          !uploadedFileVerified
+        ) {
+
+          alert(
+            'Please verify file first'
           );
 
           return;
