@@ -45,6 +45,23 @@ export function renderTabs(
           tab-btn
           ${
             activeTab ===
+            'custom-reverse-pricing'
+              ? 'active'
+              : ''
+          }
+        "
+        data-tab="custom-reverse-pricing"
+      >
+
+        Custom Reverse Pricing
+
+      </button>
+
+      <button
+        class="
+          tab-btn
+          ${
+            activeTab ===
             'pricing-calculator'
               ? 'active'
               : ''
