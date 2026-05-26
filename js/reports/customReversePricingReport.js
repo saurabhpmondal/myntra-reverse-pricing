@@ -42,44 +42,19 @@ function downloadSampleFile() {
 `style_id,return_percentage,dispatch_cost,rule
 DEMO123,35,30,TP`;
 
-  const blob =
-    new Blob(
-      [csvContent],
-      {
-        type:
-          'text/csv'
-      }
-    );
-
-  const url =
-    window.URL.createObjectURL(
-      blob
-    );
-
   const link =
     document.createElement('a');
 
-  link.style.display =
-    'none';
-
-  link.href = url;
+  link.href =
+    'data:text/csv;charset=utf-8,' +
+    encodeURIComponent(
+      csvContent
+    );
 
   link.download =
     'custom_reverse_pricing_sample.csv';
 
-  document.body.appendChild(
-    link
-  );
-
   link.click();
-
-  document.body.removeChild(
-    link
-  );
-
-  window.URL.revokeObjectURL(
-    url
-  );
 
 }
 
