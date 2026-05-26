@@ -8,6 +8,7 @@ function round2(value) {
     Number(value || 0)
       .toFixed(2)
   );
+
 }
 
 function generateContinueRules(tp) {
@@ -69,6 +70,7 @@ function generateContinueRules(tp) {
     }
 
   ];
+
 }
 
 function generateOtherRules(tp) {
@@ -91,13 +93,13 @@ function generateOtherRules(tp) {
         )
     },
 
-{
-  label: 'TP-15%',
-  target:
-    round2(
-      tp * 0.85
-    )
-},
+    {
+      label: 'TP-15%',
+      target:
+        round2(
+          tp * 0.85
+        )
+    },
 
     {
       label: 'TP-10%',
@@ -122,6 +124,7 @@ function generateOtherRules(tp) {
     }
 
   ];
+
 }
 
 function getPricingRules({
@@ -138,6 +141,7 @@ function getPricingRules({
   }
 
   return generateOtherRules(tp);
+
 }
 
 export function generatePricingLadder({
@@ -148,7 +152,10 @@ export function generatePricingLadder({
   status,
 
   tp,
-  mrp
+  mrp,
+
+  customReturnPercent = null,
+  customDispatchCost = null
 
 }) {
 
@@ -174,7 +181,10 @@ export function generatePricingLadder({
             rule.target,
 
           tp,
-          mrp
+          mrp,
+
+          customReturnPercent,
+          customDispatchCost
 
         });
 
@@ -222,4 +232,5 @@ export function generatePricingLadder({
   });
 
   return results;
+
 }
