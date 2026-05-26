@@ -24,11 +24,18 @@ function round2(value) {
 }
 
 export function calculateSettlement({
+
   brand,
   articleType,
+
   sellingPrice,
+
   tp = 0,
-  mrp = 0
+  mrp = 0,
+
+  customReturnPercent = null,
+  customDispatchCost = null
+
 }) {
 
   const SP =
@@ -111,7 +118,6 @@ export function calculateSettlement({
   /*
   -----------------------------------
   GST ON COM + FIXED FEE
-  NO ROUNDUP
   -----------------------------------
   */
 
@@ -258,7 +264,6 @@ export function calculateSettlement({
   /*
   -----------------------------------
   FINAL ROYALTY
-  GST INCLUDED
   -----------------------------------
   */
 
@@ -297,16 +302,35 @@ export function calculateSettlement({
 
   /*
   -----------------------------------
-  DISPATCH COST
+  DEFAULT DISPATCH
+  -----------------------------------
+  */
+
+  const defaultDispatchCost =
+    SP < 1000
+
+      ? BUSINESS_RULES
+          .DISPATCH_BELOW_1000
+
+      : BUSINESS_RULES
+          .DISPATCH_ABOVE_1000;
+
+  /*
+  -----------------------------------
+  FINAL DISPATCH
   -----------------------------------
   */
 
   const dispatchCost =
-    SP < 1000
-      ? BUSINESS_RULES
-          .DISPATCH_BELOW_1000
-      : BUSINESS_RULES
-          .DISPATCH_ABOVE_1000;
+
+    customDispatchCost !== null &&
+    customDispatchCost !== undefined
+
+      ? Number(
+          customDispatchCost
+        )
+
+      : defaultDispatchCost;
 
   /*
   -----------------------------------
@@ -327,6 +351,41 @@ export function calculateSettlement({
 
   /*
   -----------------------------------
+  FINAL RTV %
+  -----------------------------------
+  */
+
+  const finalRtvPercent =
+
+    customReturnPercent !== null &&
+    customReturnPercent !== undefined
+
+      ? Number(
+          customReturnPercent
+        )
+
+      : Number(
+          codbData.rtvPercent || 0
+        );
+
+  /*
+  -----------------------------------
+  CUSTOM RTV CODB
+  -----------------------------------
+  */
+
+  const finalRtvCodb =
+    round2(
+
+      (
+        payoutBeforeCODB *
+        finalRtvPercent
+      ) / 100
+
+    );
+
+  /*
+  -----------------------------------
   FINAL PAYOUT
   -----------------------------------
   */
@@ -336,7 +395,7 @@ export function calculateSettlement({
 
       payoutBeforeCODB -
       dispatchCost -
-      codbData.rtvCodb
+      finalRtvCodb
 
     );
 
@@ -492,14 +551,10 @@ export function calculateSettlement({
       ),
 
     rtvPercent:
-      codbData
-        .rtvPercent,
+      finalRtvPercent,
 
     rtvCodb:
-      round2(
-        codbData
-          .rtvCodb
-      ),
+      finalRtvCodb,
 
     /*
     FINAL
