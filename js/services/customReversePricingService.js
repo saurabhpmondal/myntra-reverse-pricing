@@ -11,6 +11,24 @@ import {
 } from '../engine/pricingEngine.js';
 
 /* -----------------------------------
+VALID RULES
+----------------------------------- */
+
+const VALID_RULES = [
+
+  'TP-40%',
+  'TP-20%',
+  'TP-15%',
+  'TP-10%',
+  'TP-5%',
+  'TP',
+  'TP+5%',
+  'TP+10%',
+  'TP+15%'
+
+];
+
+/* -----------------------------------
 PROCESS FILE
 ----------------------------------- */
 
@@ -64,6 +82,34 @@ export async function processCustomReversePricingFile(file) {
         row['DISPATCH COST'] || 0
       );
 
+    const selectedRule =
+      row['RULE']
+        ?.toString()
+        .trim()
+        .toUpperCase();
+
+    /*
+    -----------------------------------
+    INVALID RULE
+    -----------------------------------
+    */
+
+    if (
+      !VALID_RULES.includes(
+        selectedRule
+      )
+    ) {
+
+      return;
+
+    }
+
+    /*
+    -----------------------------------
+    PRODUCT
+    -----------------------------------
+    */
+
     const product =
       appCache.productMap[
         styleId
@@ -72,6 +118,12 @@ export async function processCustomReversePricingFile(file) {
     if (!product) {
       return;
     }
+
+    /*
+    -----------------------------------
+    GENERATE LADDER
+    -----------------------------------
+    */
 
     const ladder =
       generatePricingLadder({
@@ -97,50 +149,65 @@ export async function processCustomReversePricingFile(file) {
 
       });
 
-    ladder.forEach(item => {
+    /*
+    -----------------------------------
+    SELECT ONLY REQUIRED RULE
+    -----------------------------------
+    */
 
-      const settlement =
-        item.settlement;
+    const matchedRule =
+      ladder.find(
+        item =>
 
-      results.push({
+          item.pricingRule
+            .toUpperCase() ===
+          selectedRule
+      );
 
-        style_id:
-          product.style_id,
+    if (!matchedRule) {
+      return;
+    }
 
-        brand:
-          product.brand,
+    const settlement =
+      matchedRule.settlement;
 
-        article_type:
-          product.article_type,
+    results.push({
 
-        status:
-          product.status,
+      style_id:
+        product.style_id,
 
-        custom_return_percent:
-          customReturnPercent,
+      brand:
+        product.brand,
 
-        custom_dispatch_cost:
-          customDispatchCost,
+      article_type:
+        product.article_type,
 
-        selected_rule:
-          item.pricingRule,
+      status:
+        product.status,
 
-        sp:
-          settlement.sellingPrice,
+      custom_return_percent:
+        customReturnPercent,
 
-        gta:
-          settlement.gtaCharge,
+      custom_dispatch_cost:
+        customDispatchCost,
 
-        final_payout:
-          settlement.payoutAfterCODB,
+      selected_rule:
+        matchedRule.pricingRule,
 
-        tp_profit_rs:
-          settlement.tpProfitRs,
+      sp:
+        settlement.sellingPrice,
 
-        tp_profit_percent:
-          settlement.tpProfitPercent
+      gta:
+        settlement.gtaCharge,
 
-      });
+      final_payout:
+        settlement.payoutAfterCODB,
+
+      tp_profit_rs:
+        settlement.tpProfitRs,
+
+      tp_profit_percent:
+        settlement.tpProfitPercent
 
     });
 
