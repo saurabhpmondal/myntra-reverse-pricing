@@ -37,34 +37,19 @@ function downloadSampleFile() {
   const csv = `style_id,target_isp,target_discount,rebate_percent
 38992879,1602,71,2.5`;
 
-  const blob =
-    new Blob(
-      [csv],
-      {
-        type: 'text/csv'
-      }
-    );
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-  const a =
+  const link =
     document.createElement(
       'a'
     );
 
-  a.href = url;
+  link.href =
+    'data:text/csv;charset=utf-8,' +
+    encodeURIComponent(csv);
 
-  a.download =
+  link.download =
     'rebate_sample_file.csv';
 
-  a.click();
-
-  URL.revokeObjectURL(
-    url
-  );
+  link.click();
 
 }
 
@@ -83,6 +68,7 @@ function exportToCSV() {
   const headers = [
 
     'Style ID',
+    'ERP SKU',
     'ERP Status',
     'Brand',
     'MRP',
@@ -118,6 +104,7 @@ function exportToCSV() {
       row => [
 
         row.styleId,
+        row.erpSku,
         row.erpStatus,
         row.brand,
         row.mrp,
@@ -160,35 +147,21 @@ function exportToCSV() {
 
   ].join('\n');
 
-  const blob =
-    new Blob(
-      [csvContent],
-      {
-        type:
-          'text/csv;charset=utf-8;'
-      }
-    );
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
   const link =
     document.createElement(
       'a'
     );
 
-  link.href = url;
+  link.href =
+    'data:text/csv;charset=utf-8,' +
+    encodeURIComponent(
+      csvContent
+    );
 
   link.download =
     'rebate_decision_output.csv';
 
   link.click();
-
-  URL.revokeObjectURL(
-    url
-  );
 
 }
 
@@ -331,6 +304,7 @@ function renderResultTable(
           <tr>
 
             <th>Style ID</th>
+            <th>ERP SKU</th>
             <th>ERP Status</th>
             <th>Brand</th>
             <th>MRP</th>
@@ -370,6 +344,7 @@ function renderResultTable(
             <tr>
 
               <td>${row.styleId || '-'}</td>
+              <td>${row.erpSku || '-'}</td>
               <td>${row.erpStatus || '-'}</td>
               <td>${row.brand || '-'}</td>
               <td>${formatNumber(row.mrp)}</td>
@@ -810,6 +785,9 @@ export function initializeRebateReport() {
 
                 styleId:
                   item.styleId,
+
+                erpSku:
+                  product.erp_sku,
 
                 erpStatus:
                   product.status,
