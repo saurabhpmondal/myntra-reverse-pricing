@@ -3,7 +3,13 @@ import {
   exportCustomReversePricing
 } from '../services/customReversePricingService.js';
 
+import {
+  appCache
+} from '../services/cacheService.js';
+
 let uploadedRows = [];
+
+let verifiedRows = [];
 
 let uploadedFileVerified =
   false;
@@ -26,53 +32,107 @@ function formatNumber(value) {
 }
 
 /* -----------------------------------
-DOWNLOAD SAMPLE
+DOWNLOAD SAMPLE CSV
 ----------------------------------- */
 
 function downloadSampleFile() {
 
-  if (
-    typeof XLSX ===
-    'undefined'
-  ) {
+  const csvContent =
 
-    alert(
-      'XLSX library not loaded'
+`STYLE ID,RETURN %,DISPATCH COST
+DEMO123,35,30`;
+
+  const blob =
+    new Blob(
+      [csvContent],
+      {
+        type: 'text/csv;charset=utf-8;'
+      }
     );
 
-    return;
+  const url =
+    URL.createObjectURL(blob);
 
-  }
+  const link =
+    document.createElement('a');
 
-  const rows = [
+  link.href = url;
 
-    {
-      'STYLE ID': '',
-      'RETURN %': '',
-      'DISPATCH COST': ''
+  link.download =
+    'custom_reverse_pricing_sample.csv';
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+}
+
+/* -----------------------------------
+READ CSV/XLSX
+----------------------------------- */
+
+async function readUploadedFile(
+  file
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const reader =
+        new FileReader();
+
+      reader.onload =
+        event => {
+
+          try {
+
+            const data =
+              new Uint8Array(
+                event.target.result
+              );
+
+            const workbook =
+              XLSX.read(
+                data,
+                {
+                  type: 'array'
+                }
+              );
+
+            const sheetName =
+              workbook
+                .SheetNames[0];
+
+            const worksheet =
+              workbook.Sheets[
+                sheetName
+              ];
+
+            const json =
+              XLSX.utils.sheet_to_json(
+                worksheet,
+                {
+                  defval: ''
+                }
+              );
+
+            resolve(json);
+
+          } catch (error) {
+
+            reject(error);
+
+          }
+
+        };
+
+      reader.readAsArrayBuffer(
+        file
+      );
+
     }
-
-  ];
-
-  const worksheet =
-    XLSX.utils.json_to_sheet(
-      rows
-    );
-
-  const workbook =
-    XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-
-    workbook,
-    worksheet,
-    'Sample'
-
-  );
-
-  XLSX.writeFile(
-    workbook,
-    'custom_reverse_pricing_sample.xlsx'
   );
 
 }
@@ -127,10 +187,6 @@ export function renderCustomReversePricingReport() {
 
     <div class="report-section">
 
-      <!-- -----------------------------------
-      UPLOAD CARD
-      ----------------------------------- -->
-
       <div
         style="
           max-width:760px;
@@ -182,7 +238,7 @@ export function renderCustomReversePricingReport() {
           "
         >
 
-          Upload simulation file with custom return %
+          Upload CSV/XLSX with custom return %
           and dispatch cost.
 
         </div>
@@ -208,17 +264,13 @@ export function renderCustomReversePricingReport() {
             id="downloadCustomReversePricingSampleBtn"
           >
 
-            Download Sample
+            Download Sample CSV
 
           </button>
 
         </div>
 
       </div>
-
-      <!-- -----------------------------------
-      FILE VERIFIED
-      ----------------------------------- -->
 
       <div
         id="customReversePricingVerification"
@@ -330,10 +382,6 @@ export function renderCustomReversePricingReport() {
 
       </div>
 
-      <!-- -----------------------------------
-      ACTIONS
-      ----------------------------------- -->
-
       <div
         id="customReversePricingActions"
         style="
@@ -372,10 +420,6 @@ export function renderCustomReversePricingReport() {
 
       </div>
 
-      <!-- -----------------------------------
-      SUMMARY
-      ----------------------------------- -->
-
       <div
         id="customReversePricingSummary"
         style="
@@ -387,10 +431,6 @@ export function renderCustomReversePricingReport() {
       >
 
       </div>
-
-      <!-- -----------------------------------
-      TABLE
-      ----------------------------------- -->
 
       <div class="report-table-wrapper">
 
@@ -487,12 +527,6 @@ export function initializeCustomReversePricing() {
       'customReversePricingSummary'
     );
 
-  /*
-  -----------------------------------
-  SAMPLE
-  -----------------------------------
-  */
-
   if (sampleBtn) {
 
     sampleBtn.onclick =
@@ -502,7 +536,7 @@ export function initializeCustomReversePricing() {
 
   /*
   -----------------------------------
-  FILE VERIFY
+  FILE VALIDATION
   -----------------------------------
   */
 
@@ -518,35 +552,91 @@ export function initializeCustomReversePricing() {
           return;
         }
 
-        uploadedFileVerified =
-          true;
+        try {
 
-        verificationBox.style.display =
-          'block';
+          const uploadedData =
+            await readUploadedFile(
+              file
+            );
 
-        actionsBox.style.display =
-          'block';
+          const totalUploaded =
+            uploadedData.length;
 
-        /*
-        -----------------------------------
-        TEMP KPI
-        -----------------------------------
-        */
+          verifiedRows = [];
 
-        document.getElementById(
-          'customTotalUploaded'
-        ).innerText =
-          '1';
+          let foundCount = 0;
 
-        document.getElementById(
-          'customFoundCount'
-        ).innerText =
-          '1';
+          let notFoundCount = 0;
 
-        document.getElementById(
-          'customNotFoundCount'
-        ).innerText =
-          '0';
+          uploadedData.forEach(
+            row => {
+
+              const styleId =
+                row[
+                  'STYLE ID'
+                ]
+                  ?.toString()
+                  .trim()
+                  .toUpperCase();
+
+              const masterRow =
+                appCache.productMap[
+                  styleId
+                ];
+
+              if (masterRow) {
+
+                foundCount++;
+
+                verifiedRows.push(
+                  row
+                );
+
+              } else {
+
+                notFoundCount++;
+
+              }
+
+            }
+          );
+
+          verificationBox.style.display =
+            'block';
+
+          actionsBox.style.display =
+            'block';
+
+          document.getElementById(
+            'customTotalUploaded'
+          ).innerText =
+            totalUploaded.toLocaleString(
+              'en-IN'
+            );
+
+          document.getElementById(
+            'customFoundCount'
+          ).innerText =
+            foundCount.toLocaleString(
+              'en-IN'
+            );
+
+          document.getElementById(
+            'customNotFoundCount'
+          ).innerText =
+            notFoundCount.toLocaleString(
+              'en-IN'
+            );
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            'Invalid file format'
+          );
+
+        }
 
       };
 
@@ -593,27 +683,6 @@ export function initializeCustomReversePricing() {
           Pricing Records
 
         `;
-
-        /*
-        -----------------------------------
-        KPI UPDATE
-        -----------------------------------
-        */
-
-        document.getElementById(
-          'customTotalUploaded'
-        ).innerText =
-          uploadedRows.length.toLocaleString('en-IN');
-
-        document.getElementById(
-          'customFoundCount'
-        ).innerText =
-          uploadedRows.length.toLocaleString('en-IN');
-
-        document.getElementById(
-          'customNotFoundCount'
-        ).innerText =
-          '0';
 
         if (!uploadedRows.length) {
 
