@@ -39,8 +39,8 @@ function downloadSampleFile() {
 
   const csvContent =
 
-`STYLE ID,RETURN %,DISPATCH COST
-DEMO123,35,30`;
+`STYLE ID,RETURN %,DISPATCH COST,RULE
+DEMO123,35,30,TP`;
 
   const blob =
     new Blob(
@@ -233,13 +233,29 @@ export function renderCustomReversePricingReport() {
         <div
           style="
             color:#777;
-            margin-bottom:28px;
+            margin-bottom:12px;
             font-size:15px;
+            line-height:1.7;
           "
         >
 
-          Upload CSV/XLSX with custom return %
-          and dispatch cost.
+          Upload CSV/XLSX with custom return %,
+          dispatch cost and pricing rule.
+
+        </div>
+
+        <div
+          style="
+            color:#999;
+            font-size:13px;
+            margin-bottom:28px;
+          "
+        >
+
+          Allowed Rules:
+          TP-40%, TP-20%, TP-15%,
+          TP-10%, TP-5%, TP,
+          TP+5%, TP+10%, TP+15%
 
         </div>
 
