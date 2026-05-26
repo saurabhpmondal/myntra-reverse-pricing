@@ -23,6 +23,58 @@ function formatNumber(value) {
 }
 
 /* -----------------------------------
+DOWNLOAD SAMPLE
+----------------------------------- */
+
+function downloadSampleFile() {
+
+  if (
+    typeof XLSX ===
+    'undefined'
+  ) {
+
+    alert(
+      'XLSX library not loaded'
+    );
+
+    return;
+
+  }
+
+  const rows = [
+
+    {
+      'STYLE ID': '',
+      'RETURN %': '',
+      'DISPATCH COST': ''
+    }
+
+  ];
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      rows
+    );
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+
+    workbook,
+    worksheet,
+    'Sample'
+
+  );
+
+  XLSX.writeFile(
+    workbook,
+    'custom_reverse_pricing_sample.xlsx'
+  );
+
+}
+
+/* -----------------------------------
 TABLE
 ----------------------------------- */
 
@@ -33,16 +85,27 @@ function buildRows(rows) {
     <tr>
 
       <td>${row.style_id}</td>
+
       <td>${row.brand}</td>
+
       <td>${row.article_type}</td>
+
       <td>${row.status}</td>
+
       <td>${row.custom_return_percent}%</td>
+
       <td>${formatNumber(row.custom_dispatch_cost)}</td>
+
       <td>${row.selected_rule}</td>
+
       <td>${formatNumber(row.sp)}</td>
+
       <td>${formatNumber(row.gta)}</td>
+
       <td>${formatNumber(row.final_payout)}</td>
+
       <td>${formatNumber(row.tp_profit_rs)}</td>
+
       <td>${formatNumber(row.tp_profit_percent)}%</td>
 
     </tr>
@@ -68,6 +131,7 @@ export function renderCustomReversePricingReport() {
           display:flex;
           gap:12px;
           flex-wrap:wrap;
+          align-items:center;
         "
       >
 
@@ -76,6 +140,15 @@ export function renderCustomReversePricingReport() {
           id="customReversePricingFile"
           accept=".xlsx,.csv"
         >
+
+        <button
+          class="tab-btn"
+          id="downloadCustomReversePricingSampleBtn"
+        >
+
+          Download Sample
+
+        </button>
 
         <button
           class="tab-btn active"
@@ -175,6 +248,11 @@ export function initializeCustomReversePricing() {
       'exportCustomReversePricingBtn'
     );
 
+  const sampleBtn =
+    document.getElementById(
+      'downloadCustomReversePricingSampleBtn'
+    );
+
   const fileInput =
     document.getElementById(
       'customReversePricingFile'
@@ -190,61 +268,92 @@ export function initializeCustomReversePricing() {
       'customReversePricingSummary'
     );
 
-  generateBtn.addEventListener(
-    'click',
-    async () => {
+  if (sampleBtn) {
 
-      const file =
-        fileInput.files?.[0];
+    sampleBtn.onclick =
+      downloadSampleFile;
 
-      if (!file) {
+  }
 
-        alert(
-          'Please upload file'
+  if (generateBtn) {
+
+    generateBtn.onclick =
+      async () => {
+
+        const file =
+          fileInput.files?.[0];
+
+        if (!file) {
+
+          alert(
+            'Please upload file'
+          );
+
+          return;
+
+        }
+
+        generateBtn.disabled = true;
+
+        generateBtn.innerText =
+          'Generating...';
+
+        uploadedRows =
+          await processCustomReversePricingFile(
+            file
+          );
+
+        summary.innerHTML = `
+
+          Generated
+          ${uploadedRows.length.toLocaleString('en-IN')}
+          Pricing Records
+
+        `;
+
+        if (!uploadedRows.length) {
+
+          tbody.innerHTML = `
+
+            <tr>
+
+              <td colspan="12">
+
+                No Pricing Generated
+
+              </td>
+
+            </tr>
+
+          `;
+
+        } else {
+
+          tbody.innerHTML =
+            buildRows(uploadedRows);
+
+        }
+
+        generateBtn.disabled = false;
+
+        generateBtn.innerText =
+          'Generate Pricing';
+
+      };
+
+  }
+
+  if (exportBtn) {
+
+    exportBtn.onclick =
+      () => {
+
+        exportCustomReversePricing(
+          uploadedRows
         );
 
-        return;
+      };
 
-      }
-
-      generateBtn.disabled = true;
-
-      generateBtn.innerText =
-        'Generating...';
-
-      uploadedRows =
-        await processCustomReversePricingFile(
-          file
-        );
-
-      summary.innerHTML = `
-
-        Generated
-        ${uploadedRows.length.toLocaleString('en-IN')}
-        Pricing Records
-
-      `;
-
-      tbody.innerHTML =
-        buildRows(uploadedRows);
-
-      generateBtn.disabled = false;
-
-      generateBtn.innerText =
-        'Generate Pricing';
-
-    }
-  );
-
-  exportBtn.addEventListener(
-    'click',
-    () => {
-
-      exportCustomReversePricing(
-        uploadedRows
-      );
-
-    }
-  );
+  }
 
 }
