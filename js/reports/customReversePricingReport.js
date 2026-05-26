@@ -88,6 +88,58 @@ async function readUploadedFile(
 
           try {
 
+            /*
+            -----------------------------------
+            CSV
+            -----------------------------------
+            */
+
+            if (
+              file.name
+                .toLowerCase()
+                .endsWith('.csv')
+            ) {
+
+              const text =
+                event.target.result;
+
+              const workbook =
+                XLSX.read(
+                  text,
+                  {
+                    type: 'string'
+                  }
+                );
+
+              const sheetName =
+                workbook
+                  .SheetNames[0];
+
+              const worksheet =
+                workbook.Sheets[
+                  sheetName
+                ];
+
+              const json =
+                XLSX.utils.sheet_to_json(
+                  worksheet,
+                  {
+                    defval: ''
+                  }
+                );
+
+              resolve(json);
+
+              return;
+
+            }
+
+            /*
+            -----------------------------------
+            XLSX
+            -----------------------------------
+            */
+
             const data =
               new Uint8Array(
                 event.target.result
@@ -128,9 +180,27 @@ async function readUploadedFile(
 
         };
 
-      reader.readAsArrayBuffer(
-        file
-      );
+      /*
+      -----------------------------------
+      FILE TYPE
+      -----------------------------------
+      */
+
+      if (
+        file.name
+          .toLowerCase()
+          .endsWith('.csv')
+      ) {
+
+        reader.readAsText(file);
+
+      } else {
+
+        reader.readAsArrayBuffer(
+          file
+        );
+
+      }
 
     }
   );
