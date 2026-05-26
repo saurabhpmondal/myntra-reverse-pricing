@@ -37,62 +37,49 @@ DOWNLOAD SAMPLE CSV
 
 function downloadSampleFile() {
 
-  const rows = [
-
-    [
-      'style_id',
-      'return_percentage',
-      'dispatch_cost',
-      'rule'
-    ],
-
-    [
-      'DEMO123',
-      '35',
-      '30',
-      'TP'
-    ]
-
-  ];
-
   const csvContent =
-    rows
-      .map(
-        row => row.join(',')
-      )
-      .join('\n');
+
+`style_id,return_percentage,dispatch_cost,rule
+DEMO123,35,30,TP`;
 
   const blob =
     new Blob(
-
-      [
-        '\uFEFF' +
-        csvContent
-      ],
-
+      [csvContent],
       {
         type:
-          'text/csv;charset=utf-8;'
+          'text/csv'
       }
-
     );
 
   const url =
-    URL.createObjectURL(blob);
+    window.URL.createObjectURL(
+      blob
+    );
 
   const link =
     document.createElement('a');
+
+  link.style.display =
+    'none';
 
   link.href = url;
 
   link.download =
     'custom_reverse_pricing_sample.csv';
 
-  document.body.appendChild(link);
+  document.body.appendChild(
+    link
+  );
 
   link.click();
 
-  document.body.removeChild(link);
+  document.body.removeChild(
+    link
+  );
+
+  window.URL.revokeObjectURL(
+    url
+  );
 
 }
 
@@ -647,12 +634,6 @@ export function initializeCustomReversePricing() {
 
   }
 
-  /*
-  -----------------------------------
-  FILE VALIDATION
-  -----------------------------------
-  */
-
   if (fileInput) {
 
     fileInput.onchange =
@@ -666,6 +647,9 @@ export function initializeCustomReversePricing() {
         }
 
         try {
+
+          uploadedFileVerified =
+            false;
 
           const uploadedData =
             await readUploadedFile(
@@ -758,12 +742,6 @@ export function initializeCustomReversePricing() {
 
   }
 
-  /*
-  -----------------------------------
-  GENERATE
-  -----------------------------------
-  */
-
   if (generateBtn) {
 
     generateBtn.onclick =
@@ -843,12 +821,6 @@ export function initializeCustomReversePricing() {
       };
 
   }
-
-  /*
-  -----------------------------------
-  EXPORT
-  -----------------------------------
-  */
 
   if (exportBtn) {
 
