@@ -374,15 +374,39 @@ export function calculateSettlement({
   -----------------------------------
   */
 
-  const finalRtvCodb =
-    round2(
+  /*
+-----------------------------------
+CUSTOM RTV CODB
+-----------------------------------
+*/
 
-      (
-        payoutBeforeCODB *
-        finalRtvPercent
-      ) / 100
+let finalRtvCodb;
 
-    );
+if (
+  customReturnPercent !== null &&
+  customReturnPercent !== undefined
+) {
+
+  finalRtvCodb = round2(
+
+    (
+      codbData.returnCost *
+      finalRtvPercent
+    ) /
+
+    (
+      100 -
+      finalRtvPercent
+    )
+
+  );
+
+} else {
+
+  finalRtvCodb =
+    round2(codbData.rtvCodb);
+
+}
 
   /*
   -----------------------------------
