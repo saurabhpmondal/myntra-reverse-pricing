@@ -126,7 +126,7 @@ function exportToCSV() {
 
     ...rows.map(
       row =>
-        row.join(',')
+        row.map(v => typeof v === 'number' ? v.toFixed(2) : v).join(',')
     )
 
   ].join('\n');
@@ -708,19 +708,13 @@ export function initializeRecoReport() {
                 });
 
               const uploadSettlement =
-                Number(
-                  item.settlementPrice || 0
-                );
+                settlement.uploadSettlement;
 
               const tdsTcs =
-                (
-                  uploadSettlement *
-                  0.6
-                ) / 100;
+                settlement.totalTaxDeduction;
 
               const bankSettlement =
-                uploadSettlement -
-                tdsTcs;
+                settlement.bankSettlement;
 
               const royalty =
                 settlement.royalty;
@@ -732,13 +726,7 @@ export function initializeRecoReport() {
                 0;
 
               const payoutBeforeCODB =
-                bankSettlement -
-
-                royalty -
-
-                marketing -
-
-                rebate;
+                settlement.payoutBeforeCODB;
 
               const dispatchCost =
                 settlement.dispatchCost;
@@ -753,28 +741,16 @@ export function initializeRecoReport() {
                 settlement.rtvCodb;
 
               const payoutAfterCODB =
-                payoutBeforeCODB -
-
-                returnCODB;
+                settlement.payoutAfterCODB;
 
               const tp =
-                Number(
-                  product.tp || 0
-                );
+                settlement.tp;
 
               const tpProfitRs =
-                payoutAfterCODB -
-                tp;
+                settlement.tpProfitRs;
 
               const tpProfitPercent =
-                tp
-                  ? (
-                      (
-                        tpProfitRs /
-                        tp
-                      ) * 100
-                    )
-                  : 0;
+                settlement.tpProfitPercent;
 
               const allowedLoss =
                 product.status ===
